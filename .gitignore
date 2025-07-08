@@ -1,1 +1,6 @@
 *.out
+
+build/
+CMakeFiles/
+*.o
+flashmatch
