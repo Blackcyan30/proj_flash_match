@@ -4,6 +4,8 @@ Flashmatch is a small matching engine prototype. It is intended as the core of a
 "Flashmatch" matching engine used for experimenting with matching
 algorithms.
 
+This project targets the C++23 standard.
+
 ## Prerequisites
 
 - GCC or Clang with C++23 support
