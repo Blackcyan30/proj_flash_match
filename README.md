@@ -27,6 +27,7 @@ From the repository root, run:
 ```bash
 ./build/flashmatch
 ```
+
 ## License
 
 Flashmatch is licensed under the [MIT](LICENSE) License.
