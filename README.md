@@ -1,8 +1,6 @@
 # Flashmatch Core
 
-Flashmatch is a small matching engine prototype. It is intended as the core of a
-"Flashmatch" matching engine used for experimenting with matching
-algorithms.
+Flashmatch is a simple prototype matching engine used to experiment with order matching algorithms in C++.
 
 This project targets the C++23 standard.
 
@@ -11,7 +9,7 @@ This project targets the C++23 standard.
 - GCC or Clang with C++23 support
 - CMake 3.20 or newer
 
-## Building with CMake
+## Building
 
 ```bash
 mkdir -p build
@@ -20,11 +18,16 @@ cmake ..
 cmake --build .
 ```
 
-This produces the `flashmatch` executable in the `build/` directory.
+This creates the `flashmatch` executable in the `build/` directory.
 
-## Running the example
+## Running
+
+From the repository root, run:
 
 ```bash
 ./build/flashmatch
 ```
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+
+## License
+
+Flashmatch is licensed under the [MIT](LICENSE) License.
