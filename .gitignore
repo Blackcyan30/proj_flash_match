@@ -1,6 +1,9 @@
 *.out
 
+# Build directories and files
 build/
 CMakeFiles/
 *.o
+
+# Generated executable
 flashmatch
