@@ -32,7 +32,11 @@ From the repository root, run:
 
 Flashmatch is licensed under the [MIT](LICENSE) License.
 
+## To Build image:
+
 docker build -t flashmatch:1
+
+## To build & run container:
 
 docker run -it \
  --name flashmatch \
@@ -40,4 +44,16 @@ docker run -it \
  -w /flashmatch \
  -v /run/host-services/ssh-auth.sock:/ssh-agent \
  -e SSH_AUTH_SOCK=/ssh-agent \
- flashmatch
+ flashmatch:1
+
+## To start an already built container:
+
+docker start -ai flashmatch
+
+## To exit when in a container:
+
+exit
+
+## To explicitly stop a container:
+
+docker stop flashmatch
