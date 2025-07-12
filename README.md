@@ -31,3 +31,13 @@ From the repository root, run:
 ## License
 
 Flashmatch is licensed under the [MIT](LICENSE) License.
+
+docker build -t flashmatch:1
+
+docker run -it \
+ --name flashmatch \
+ -v "$(pwd)":/flashmatch \
+ -w /flashmatch \
+ -v /run/host-services/ssh-auth.sock:/ssh-agent \
+ -e SSH_AUTH_SOCK=/ssh-agent \
+ flashmatch
