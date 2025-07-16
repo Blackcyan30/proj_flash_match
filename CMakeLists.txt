@@ -5,12 +5,12 @@ set(CMAKE_CXX_STANDARD 23)
 
 # Library with core functionality
 add_library(flashmatch_lib
-  flashmatch.cpp
-  lock_free_queue.cpp
+  src/flashmatch.cpp
+  src/lock_free_queue.cpp
 )
-target_include_directories(flashmatch_lib PUBLIC ${PROJECT_SOURCE_DIR})
+target_include_directories(flashmatch_lib PUBLIC ${PROJECT_SOURCE_DIR}/include)
 
-add_executable(flashmatch main.cpp)
+add_executable(flashmatch src/main.cpp)
 target_link_libraries(flashmatch PRIVATE flashmatch_lib)
 
 # GoogleTest

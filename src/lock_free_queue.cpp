@@ -1,4 +1,4 @@
-#include "lock_free_queue.hpp"
+#include "flashmatch/lock_free_queue.hpp"
 #include <stdexcept>
 
 template <typename T>
