@@ -22,3 +22,4 @@ public:
   T pop();
   bool isEmpty() const;
 };
+#include "lock_free_queue.ipp"
