@@ -13,7 +13,7 @@ template <typename T> bool Atomic_Queue<T>::push(T data) {
   auto t = tail_.load(std::memory_order_relaxed);
   auto h = head_.load(std::memory_order_acquire);
 
-  auto nxt = (t + 1) % capacity_;
+  auto nxt = (t + 1) % capacity_.load();
   if (nxt == h) {
     return false;
   }
@@ -32,6 +32,6 @@ template <typename T> T Atomic_Queue<T>::pop() {
   }
 
   T to_ret = buffer_[h];
-  head_.store((h + 1) % capacity_, std::memory_order_release);
+  head_.store((h + 1) % capacity_.load(), std::memory_order_release);
   return to_ret;
 }
