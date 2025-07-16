@@ -4,7 +4,10 @@ project(Flashmatch)
 set(CMAKE_CXX_STANDARD 23)
 
 # Library with core functionality
-add_library(flashmatch_lib flashmatch.cpp)
+add_library(flashmatch_lib
+  flashmatch.cpp
+  lock_free_queue.cpp
+)
 target_include_directories(flashmatch_lib PUBLIC ${PROJECT_SOURCE_DIR})
 
 add_executable(flashmatch main.cpp)

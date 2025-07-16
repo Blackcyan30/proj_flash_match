@@ -35,3 +35,6 @@ template <typename T> T Atomic_Queue<T>::pop() {
   head_.store((h + 1) % capacity_.load(), std::memory_order_release);
   return to_ret;
 }
+
+// Explicit instantiation for int to ensure template code is generated
+template class Atomic_Queue<int>;
