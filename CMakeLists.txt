@@ -8,7 +8,6 @@ set(CMAKE_CXX_EXTENSIONS OFF)
 # Library with core functionality
 add_library(flashmatch_lib
   src/flashmatch.cpp
-  src/lock_free_queue.cpp
 )
 
 target_include_directories(flashmatch_lib PUBLIC ${PROJECT_SOURCE_DIR}/include)

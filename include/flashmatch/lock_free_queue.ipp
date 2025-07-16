@@ -1,4 +1,3 @@
-#include "flashmatch/lock_free_queue.hpp"
 #include <stdexcept>
 
 template <typename T>
@@ -36,5 +35,3 @@ template <typename T> T Atomic_Queue<T>::pop() {
   return to_ret;
 }
 
-// Explicit instantiation for int to ensure template code is generated
-template class Atomic_Queue<int>;
