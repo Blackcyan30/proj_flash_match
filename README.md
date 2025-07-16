@@ -34,7 +34,17 @@ Flashmatch is licensed under the [MIT](LICENSE) License.
 
 ## To Build image:
 
-docker build -t flashmatch:1
+Choose the desired architecture when building the Docker image. For x86_64 run:
+
+```bash
+docker build --build-arg ARCH=x86_64 -t flashmatch:1 .
+```
+
+For ARM64 run:
+
+```bash
+docker build --build-arg ARCH=aarch64 -t flashmatch:1 .
+```
 
 ## To build & run container:
 
