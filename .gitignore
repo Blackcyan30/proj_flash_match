@@ -2,5 +2,5 @@
 build/
 CMakeFiles/
 *.o
-flashmatch
+/flashmatch
 tmp/

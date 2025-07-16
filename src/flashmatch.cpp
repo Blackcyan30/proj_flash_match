@@ -1,4 +1,4 @@
-#include "flashmatch.hpp"
+#include "flashmatch/flashmatch.hpp"
 #include <iostream>
 
 int run_flashmatch() {
