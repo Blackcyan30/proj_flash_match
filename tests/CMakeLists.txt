@@ -7,5 +7,6 @@ target_link_libraries(flashmatch_tests PRIVATE
   flashmatch_lib
   gtest_main
 )
+target_compile_options(flashmatch_tests PRIVATE -O3 -march=native)
 
 add_test(NAME flashmatch_tests COMMAND flashmatch_tests)

@@ -2,13 +2,18 @@ cmake_minimum_required(VERSION 3.20)
 project(Flashmatch)
 
 set(CMAKE_CXX_STANDARD 23)
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
+set(CMAKE_CXX_EXTENSIONS OFF)
 
 # Library with core functionality
 add_library(flashmatch_lib
   src/flashmatch.cpp
   src/lock_free_queue.cpp
 )
+
 target_include_directories(flashmatch_lib PUBLIC ${PROJECT_SOURCE_DIR}/include)
+target_compile_options(flashmatch_lib PRIVATE -O3 -march=native)
+
 
 add_executable(flashmatch src/main.cpp)
 target_link_libraries(flashmatch PRIVATE flashmatch_lib)
