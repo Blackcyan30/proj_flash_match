@@ -2,11 +2,12 @@
 
 template <typename T>
 Atomic_Queue<T>::Atomic_Queue(int N)
-    : buffer_(nullptr), capacity_(N), head_(0), tail_(0) {
+    : buffer_(nullptr), capacity_(0), head_(0), tail_(0) {
   if (N <= 0) {
     throw std::invalid_argument("Queue capacity must be positive");
   }
-  buffer_ = std::make_unique<T[]>(N);
+  capacity_.store(N);
+  buffer_ = std::make_unique<T[]>(capacity_.load());
 }
 
 template <typename T> bool Atomic_Queue<T>::isEmpty() const {
