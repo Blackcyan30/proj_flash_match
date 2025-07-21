@@ -3,7 +3,12 @@ project(Flashmatch)
 
 set(CMAKE_CXX_STANDARD 23)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
-set(CMAKE_CXX_EXTENSIONS OFF)
+# set(CMAKE_CXX_EXTENSIONS OFF)
+
+
+# lock_free_queue INTERFACE lib
+add_library(lock_free_queue INTERFACE)
+target_include_directories(lock_free_queue INTERFACE ${PROJECT_SOURCE_DIR}/include)
 
 # Library with core functionality
 add_library(flashmatch_lib
@@ -12,6 +17,7 @@ add_library(flashmatch_lib
 
 target_include_directories(flashmatch_lib PUBLIC ${PROJECT_SOURCE_DIR}/include)
 target_compile_options(flashmatch_lib PRIVATE -O3 -march=native)
+target_link_libraries(flashmatch_lib PRIVATE lock_free_queue)
 
 
 add_executable(flashmatch src/main.cpp)
