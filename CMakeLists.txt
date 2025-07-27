@@ -24,6 +24,11 @@ target_link_libraries(flashmatch_lib PRIVATE lock_free_queue)
 add_executable(flashmatch src/main.cpp)
 target_link_libraries(flashmatch PRIVATE flashmatch_lib)
 
+# Benchmark executable
+add_executable(orderbook_bench src/benchmark.cpp)
+target_link_libraries(orderbook_bench PRIVATE flashmatch_lib)
+target_compile_options(orderbook_bench PRIVATE -O3 -march=native)
+
 # GoogleTest
 include(FetchContent)
 FetchContent_Declare(
