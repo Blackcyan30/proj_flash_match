@@ -13,6 +13,7 @@ target_include_directories(lock_free_queue INTERFACE ${PROJECT_SOURCE_DIR}/inclu
 # Library with core functionality
 add_library(flashmatch_lib
   src/flashmatch.cpp
+  src/order_book.cpp
 )
 
 target_include_directories(flashmatch_lib PUBLIC ${PROJECT_SOURCE_DIR}/include)
@@ -34,4 +35,5 @@ set(gtest_force_shared_crt OFF CACHE BOOL "" FORCE)
 FetchContent_MakeAvailable(googletest)
 
 enable_testing()
+include(GoogleTest)
 add_subdirectory(tests)

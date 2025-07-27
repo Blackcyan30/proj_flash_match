@@ -1,6 +1,7 @@
 add_executable(flashmatch_tests
   test_main.cpp
   test_lock_free_queue.cpp
+  test_order_book.cpp
 )
 
 target_link_libraries(flashmatch_tests PRIVATE
@@ -10,4 +11,7 @@ target_link_libraries(flashmatch_tests PRIVATE
 )
 target_compile_options(flashmatch_tests PRIVATE -O3 -march=native)
 
-add_test(NAME flashmatch_tests COMMAND flashmatch_tests)
+gtest_discover_tests(flashmatch_tests
+  EXTRA_ARGS --gtest_color=yes --gtest_print_time
+  DISCOVERY_TIMEOUT 10
+)

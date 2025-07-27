@@ -6,3 +6,4 @@ CMakeFiles/
 tmp/
 */build
 *.cmake
+/datasets/*.csv

@@ -1,24 +1,24 @@
 #include <stdexcept>
-
 template <typename T>
-Atomic_Queue<T>::Atomic_Queue(int N)
+lfq::Atomic_Queue<T>::Atomic_Queue(std::uint64_t size)
     : buffer_(nullptr), capacity_(0), head_(0), tail_(0) {
-  if (N <= 0) {
+  if (size <= 0) {
     throw std::invalid_argument("Queue capacity must be positive");
   }
-  capacity_.store(N);
-  buffer_ = std::make_unique<T[]>(capacity_.load());
+  size_ = size;
+  capacity_ = size_ + 1;
+  buffer_ = std::make_unique<T[]>(capacity_);
 }
 
-template <typename T> bool Atomic_Queue<T>::isEmpty() const {
+template <typename T> bool lfq::Atomic_Queue<T>::isEmpty() const {
   return head_.load() == tail_.load();
 }
 
-template <typename T> bool Atomic_Queue<T>::push(T data) {
+template <typename T> bool lfq::Atomic_Queue<T>::push(T data) {
   auto t = tail_.load(std::memory_order_relaxed);
   auto h = head_.load(std::memory_order_acquire);
 
-  auto nxt = (t + 1) % capacity_.load();
+  auto nxt = (t + 1) % capacity_;
   if (nxt == h) {
     return false;
   }
@@ -28,7 +28,7 @@ template <typename T> bool Atomic_Queue<T>::push(T data) {
   return true;
 }
 
-template <typename T> T Atomic_Queue<T>::pop() {
+template <typename T> T lfq::Atomic_Queue<T>::pop() {
   auto h = head_.load(std::memory_order_relaxed);
   auto t = tail_.load(std::memory_order_acquire);
 
@@ -37,6 +37,10 @@ template <typename T> T Atomic_Queue<T>::pop() {
   }
 
   T to_ret = buffer_[h];
-  head_.store((h + 1) % capacity_.load(), std::memory_order_release);
+  head_.store((h + 1) % capacity_, std::memory_order_release);
   return to_ret;
+}
+
+template <typename T> std::uint64_t lfq::Atomic_Queue<T>::size() const {
+  return size_;
 }
