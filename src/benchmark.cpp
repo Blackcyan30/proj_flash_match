@@ -56,6 +56,7 @@ stats_t run_bench(const std::string &filename) {
 
   if (!file.is_open()) {
     std::cout << "Failed to open file: " << filename << std::endl;
+    return stats_t{0, 0.0, 0.0, 0.0};
   }
 
   std::string line;
@@ -109,6 +110,7 @@ stats_t run_bench(const std::string &filename) {
   }
 
   file.close();
+
   double mean_latency = total_latencies_us.count() / ct;
   size_t threshold = static_cast<size_t>(ct * 0.99);
   size_t cumulative = 0;
@@ -172,4 +174,13 @@ void output_stats(const stats_t &stats) {
   std::cout << "Mean latency:        " << stats.mean_latency << std::endl;
   std::cout << "99th percentile:       " << stats.p99_latency << std::endl;
   std::cout << "Worst-case latency:    " << stats.worst_latency_us << std::endl;
+  // #ifdef __APPLE__
+  //   std::cout << "CPU:                   Apple" << std::endl;
+  // #else
+  std::ifstream cpuinfo("/proc/cpuinfo");
+  std::string model;
+  std::getline(cpuinfo, model);
+  std::cout << "CPU:                   " << model << '\n';
+  // #endif
+  std::cout << "Compiler flags:        -O3 -march=native" << std::endl;
 }
