@@ -1,4 +1,3 @@
-import argparse
 import csv
 import gzip
 import os
@@ -28,92 +27,108 @@ def open_output_file(filename, compress):
         return open(filename, "a", newline="")
 
 
+def generate_orders(start_id, num_orders, order_type="mixed"):
+    ids = np.arange(start_id, start_id + num_orders, dtype=np.uint64)
+    sides = np.random.choice(["BUY", "SELL"], size=num_orders)
+    prices = np.round(np.random.uniform(9.50, 10.50, size=num_orders), 2)
+    quantities = np.random.randint(1, 101, size=num_orders)
+
+    if order_type == "limit":
+        types = np.full(num_orders, "LIMIT")
+    elif order_type == "mixed":
+        types = np.random.choice(["LIMIT", "IOC"], size=num_orders)
+    else:
+        raise ValueError("Invalid order_type")
+
+    df = pd.DataFrame(
+        {
+            "id": ids,
+            "side": sides,
+            "price": prices,
+            "quantity": quantities,
+            "type": types,
+        }
+    )
+    return df
+
+
 def generate_with_pandas(
-    filename, total_rows, batch_size=100_000, compress=False, file_format="csv"
+    filename, warmup_rows, total_rows, batch_size, compress, file_format
 ):
     header_written = False
-    order_id = 1
+    current_id = 1
 
     with open_output_file(filename, compress) as file:
         with tqdm(total=total_rows, unit=" rows") as pbar:
-            while order_id <= total_rows:
-                end_id = min(order_id + batch_size, total_rows + 1)
-                size = end_id - order_id
 
-                ids = np.arange(order_id, end_id, dtype=np.uint64)
-                sides = np.random.choice(["BUY", "SELL"], size=size)
-                prices = np.round(np.random.uniform(9.50, 10.50, size=size), 2)
-                quantities = np.random.randint(1, 101, size=size)
-                types = np.random.choice(["LIMIT", "IOC"], size=size)
+            # WARMUP PHASE
+            if warmup_rows > 0:
+                for start in range(0, warmup_rows, batch_size):
+                    size = min(batch_size, warmup_rows - start)
+                    df = generate_orders(current_id, size, order_type="limit")
 
-                df = pd.DataFrame(
-                    {
-                        "order_id": ids,
-                        "side": sides,
-                        "price": prices,
-                        "quantity": quantities,
-                        "type": types,
-                    }
-                )
+                    if file_format == "csv":
+                        df.to_csv(file, header=False, index=False)
+                    elif file_format == "json":
+                        df.to_json(file, orient="records", lines=True)
+
+                    header_written = False
+                    current_id += size
+                    pbar.update(size)
+
+            # MAIN RANDOM PHASE
+            remaining_rows = total_rows - warmup_rows
+            for start in range(0, remaining_rows, batch_size):
+                size = min(batch_size, remaining_rows - start)
+                df = generate_orders(current_id, size, order_type="mixed")
 
                 if file_format == "csv":
-                    df.to_csv(file, header=not header_written, index=False)
+                    df.to_csv(file, header=False, index=False)
                 elif file_format == "json":
                     df.to_json(file, orient="records", lines=True)
 
-                header_written = True
+                current_id += size
                 pbar.update(size)
-                order_id += batch_size
 
 
 def main():
-    parser = argparse.ArgumentParser(
-        description="Generate synthetic limit-order book data."
-    )
-    parser.add_argument("num_rows", type=int, help="Number of rows to generate")
-    parser.add_argument(
-        "--batch-size", type=int, default=None, help="Custom batch size (default: auto)"
-    )
-    parser.add_argument("--output", type=str, default=None, help="Output filename")
-    parser.add_argument(
-        "--compress", action="store_true", help="Compress output to .gz"
-    )
-    parser.add_argument(
-        "--format",
-        type=str,
-        choices=["csv", "json"],
-        default="csv",
-        help="Output format (csv or json)",
-    )
+    # Collect user input
+    num_rows = int(input("Enter total number of rows to generate: "))
+    warmup_rows = int(input("Enter number of warmup (LIMIT-only) rows: "))
+    compress_input = input("Compress output file? (yes/no): ").strip().lower()
+    compress = compress_input in ("yes", "y", "true", "1")
+    format_input = input("Choose file format (csv/json): ").strip().lower()
+    file_format = format_input if format_input in ("csv", "json") else "csv"
+    filename = input("Enter output filename (or leave blank for default): ").strip()
 
-    args = parser.parse_args()
-    num_rows = args.num_rows
     ram_gb = available_ram_gb()
+    batch_size = auto_batch_size(num_rows, ram_gb)
 
     print(f"🧠 Available RAM: {ram_gb:.2f} GB")
-    batch_size = args.batch_size or auto_batch_size(num_rows, ram_gb)
     print(f"📦 Batch size: {batch_size}")
 
-    # Determine default file name
-    ext = ".json" if args.format == "json" else ".csv"
-    default_name = f"synthetic_order_book_{num_rows}{ext}"
-    if args.compress:
-        default_name += ".gz"
-    output_file = args.output or default_name
+    # Set default filename if not provided
+    ext = ".json" if file_format == "json" else ".csv"
+    output_file = filename or f"synthetic_order_book_{num_rows}{ext}"
+    if compress:
+        output_file += ".gz"
 
     print(f"📁 Output file: {output_file}")
-    print(f"🗂️ Format: {args.format.upper()} {'(compressed)' if args.compress else ''}")
+    print(f"🗂️ Format: {file_format.upper()} {'(compressed)' if compress else ''}")
     print("🚀 Starting generation...")
 
     generate_with_pandas(
         output_file,
-        num_rows,
+        warmup_rows=warmup_rows,
+        total_rows=num_rows,
         batch_size=batch_size,
-        compress=args.compress,
-        file_format=args.format,
+        compress=compress,
+        file_format=file_format,
     )
 
-    print(f"\n✅ Done! File written: {output_file}")
+    file_size_bytes = os.path.getsize(output_file)
+    print(f"📏 File size: {file_size_bytes / (1024**2):.2f} MB")
+    print(f"✅ Done! File written: {output_file}")
 
 
 if __name__ == "__main__":

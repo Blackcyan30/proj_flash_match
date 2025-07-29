@@ -20,7 +20,6 @@ target_include_directories(flashmatch_lib PUBLIC ${PROJECT_SOURCE_DIR}/include)
 target_compile_options(flashmatch_lib PRIVATE -O3 -march=native)
 target_link_libraries(flashmatch_lib PRIVATE lock_free_queue)
 
-
 add_executable(flashmatch src/main.cpp)
 target_link_libraries(flashmatch PRIVATE flashmatch_lib)
 
