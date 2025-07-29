@@ -12,6 +12,11 @@
 #include <string>
 #include <string_view>
 
+/**
+ * @class stats_t
+ * @brief
+ *
+ */
 struct stats_t {
   size_t num_orders;
   double mean_latency;
@@ -24,9 +29,7 @@ constexpr int BIN_WIDTH_US = 1;      // bin size in microseconds
 constexpr int MAX_LATENCY_US = 5000; // cover up to 5000 µs
 constexpr int NUM_BINS = MAX_LATENCY_US / BIN_WIDTH_US;
 
-// fm::Order parse_csv_line(const std::string &line) { return fm::Order{}; }
-stats_t run_bench1(const std::string &filename);
-stats_t run_bench2(const std::string &filename);
+stats_t run_bench(const std::string &filename);
 bool parse_order_line(std::string_view line, fm::Order &out);
 void output_stats(const stats_t &stats);
 
@@ -37,12 +40,18 @@ int main(int argc, char *argv[]) {
     exit(EXIT_FAILURE);
   }
   // stats_t stats1 = run_bench1(argv[1]);
-  stats_t stats2 = run_bench2(argv[1]);
-  output_stats(stats2);
+  stats_t stats = run_bench(argv[1]);
+  output_stats(stats);
   return 0;
 }
 
-stats_t run_bench1(const std::string &filename) {
+/**
+ * @brief
+ *
+ * @param filename
+ * @return
+ */
+stats_t run_bench(const std::string &filename) {
   std::ifstream file(filename);
 
   if (!file.is_open()) {
@@ -50,62 +59,7 @@ stats_t run_bench1(const std::string &filename) {
   }
 
   std::string line;
-  // discarding the first line in the file as that just contains
-  // what values the columns will contain.
-  fm::OrderBook ob;
-  size_t ct = 0;
-  std::chrono::duration<double, std::micro> total_latencies_us{0};
-  double worst_latency_us = 0.0;
-  std::array<size_t, NUM_BINS> histogram{};
-  while (std::getline(file, line)) {
-    fm::Order new_order;
-    if (!parse_order_line(line, new_order)) {
-      std::cout << "Failed to parse line: " << line << std::endl;
-      break;
-    }
-
-    auto start{std::chrono::steady_clock::now()};
-    ob.match(new_order);
-    auto finish{std::chrono::steady_clock::now()};
-    std::chrono::duration<double, std::micro> time_elapsed{finish - start};
-    total_latencies_us += time_elapsed;
-    double latency_us = time_elapsed.count();
-    worst_latency_us = std::max(latency_us, worst_latency_us);
-    ++ct;
-    // if (ct == 1)
-    // break;
-    int bin_index = static_cast<int>(latency_us / BIN_WIDTH_US);
-    if (bin_index >= NUM_BINS)
-      bin_index = NUM_BINS - 1;
-    ++histogram[bin_index];
-  }
-
-  file.close();
-  double mean_latency = total_latencies_us.count() / ct;
-  size_t threshold = static_cast<size_t>(ct * 0.99);
-  size_t cumulative = 0;
-  int p99_bin = NUM_BINS - 1;
-  for (int i = 0; i < NUM_BINS; ++i) {
-    cumulative += histogram[i];
-    if (cumulative >= threshold) {
-      p99_bin = i;
-      break;
-    }
-  }
-  double p99_latency = p99_bin * BIN_WIDTH_US;
-
-  return stats_t{ct, mean_latency, p99_latency, worst_latency_us};
-}
-
-stats_t run_bench2(const std::string &filename) {
-  std::ifstream file(filename);
-
-  if (!file.is_open()) {
-    std::cout << "Failed to open file: " << filename << std::endl;
-  }
-
-  std::string line;
-  // discarding the first line in the file as that just contains
+  // Discarding the first line in the file as that just contains
   // what values the columns will contain.
   fm::OrderBook ob;
   size_t ct = 0;
@@ -140,13 +94,14 @@ stats_t run_bench2(const std::string &filename) {
     auto start{std::chrono::steady_clock::now()};
     ob.match(new_order);
     auto finish{std::chrono::steady_clock::now()};
+
     std::chrono::duration<double, std::micro> time_elapsed{finish - start};
+
     total_latencies_us += time_elapsed;
     double latency_us = time_elapsed.count();
     worst_latency_us = std::max(latency_us, worst_latency_us);
     ++ct;
-    // if (ct == 1)
-    // break;
+
     int bin_index = static_cast<int>(latency_us / BIN_WIDTH_US);
     if (bin_index >= NUM_BINS)
       bin_index = NUM_BINS - 1;
@@ -158,6 +113,7 @@ stats_t run_bench2(const std::string &filename) {
   size_t threshold = static_cast<size_t>(ct * 0.99);
   size_t cumulative = 0;
   int p99_bin = NUM_BINS - 1;
+
   for (int i = 0; i < NUM_BINS; ++i) {
     cumulative += histogram[i];
     if (cumulative >= threshold) {
@@ -170,6 +126,13 @@ stats_t run_bench2(const std::string &filename) {
   return stats_t{ct, mean_latency, p99_latency, worst_latency_us};
 }
 
+/**
+ * @brief
+ *
+ * @param line
+ * @param out
+ * @return
+ */
 bool parse_order_line(std::string_view line, fm::Order &out) {
   size_t start = 0, end = 0;
   std::array<std::string_view, 5> tokens;
@@ -197,6 +160,11 @@ bool parse_order_line(std::string_view line, fm::Order &out) {
   return true;
 }
 
+/**
+ * @brief
+ *
+ * @param stats
+ */
 void output_stats(const stats_t &stats) {
   std::cout << "=== Flashmatch Benchmark ===\n";
   std::cout << "Orders processed:      " << stats.num_orders << "\n";
