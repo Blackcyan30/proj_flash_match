@@ -28,6 +28,15 @@ From the repository root, run:
 ./build/flashmatch
 ```
 
+## Progress
+
+Days 1–4 complete. To benchmark, build and run `orderbook_bench`:
+
+```bash
+cmake --build . --target orderbook_bench
+./orderbook_bench <data_file>
+```
+
 ## License
 
 Flashmatch is licensed under the [MIT](LICENSE) License.
