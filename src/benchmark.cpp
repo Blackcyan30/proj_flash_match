@@ -2,14 +2,13 @@
  * @file benchmark.cpp
  * @details This file contains the benchmark code for the order book.
  */
-#include "../include/flashmatch/order_book.hpp"
+#include "flashmatch/order_book.hpp"
 #include <array>
 #include <charconv> // for std::from_chars
 #include <chrono>
 #include <fstream>
 #include <iomanip>
 #include <iostream>
-#include <string>
 #include <string_view>
 
 /**
