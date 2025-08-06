@@ -29,6 +29,7 @@ def open_output_file(filename, compress):
 
 def generate_orders(start_id, num_orders, order_type="mixed"):
     ids = np.arange(start_id, start_id + num_orders, dtype=np.uint64)
+    symbols = np.random.choice(["AAPL", "GOOG", "MSFT", "TSLA"], size=num_orders)
     sides = np.random.choice(["BUY", "SELL"], size=num_orders)
     prices = np.round(np.random.uniform(9.50, 10.50, size=num_orders), 2)
     quantities = np.random.randint(1, 101, size=num_orders)
@@ -42,7 +43,8 @@ def generate_orders(start_id, num_orders, order_type="mixed"):
 
     df = pd.DataFrame(
         {
-            "id": ids,
+            "order_id": ids,
+            "symbol": symbols,
             "side": sides,
             "price": prices,
             "quantity": quantities,
@@ -68,11 +70,10 @@ def generate_with_pandas(
                     df = generate_orders(current_id, size, order_type="limit")
 
                     if file_format == "csv":
-                        df.to_csv(file, header=False, index=False)
+                        df.to_csv(file, header=not header_written, index=False)
+                        header_written = True
                     elif file_format == "json":
                         df.to_json(file, orient="records", lines=True)
-
-                    header_written = False
                     current_id += size
                     pbar.update(size)
 
@@ -83,7 +84,8 @@ def generate_with_pandas(
                 df = generate_orders(current_id, size, order_type="mixed")
 
                 if file_format == "csv":
-                    df.to_csv(file, header=False, index=False)
+                    df.to_csv(file, header=not header_written, index=False)
+                    header_written = True
                 elif file_format == "json":
                     df.to_json(file, orient="records", lines=True)
 
