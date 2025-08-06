@@ -1,7 +1,9 @@
 #ifndef FLASHMATCH_MATCHING_ENGINE_HPP
 #define FLASHMATCH_MATCHING_ENGINE_HPP
 
+
 #include <queue>
+
 #include <string>
 #include <unordered_map>
 #include <vector>
@@ -13,6 +15,7 @@ namespace fm {
 class MatchingEngine {
 public:
   MatchingEngine() = default;
+
   // Insert an order without triggering any matching.
   void insert(const Order &order);
   // Queue an order for later processing.
@@ -20,6 +23,7 @@ public:
   // Process all queued orders and return the trades executed.
   std::vector<Trade> run();
   // Immediately process an order and return the trades executed.
+
   std::vector<Trade> submit(const Order &order);
 
 private:

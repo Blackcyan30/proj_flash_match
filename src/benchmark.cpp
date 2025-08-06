@@ -60,9 +60,8 @@ stats_t run_bench(const std::string &filename) {
   }
 
   std::string line;
-  // Discard header line if present
-  std::string header;
-  std::getline(file, header);
+  // Discarding the first line in the file as that just contains
+  // what values the columns will contain.
   fm::MatchingEngine engine;
   size_t ct = 0;
   std::chrono::duration<double, std::micro> total_latencies_us{0};

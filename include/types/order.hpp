@@ -2,6 +2,7 @@
 #define TYPES_ORDER_HPP
 
 #include <cstdint>
+
 #include <string>
 
 #include "types/side.hpp"
