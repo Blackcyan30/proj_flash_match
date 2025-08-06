@@ -43,7 +43,7 @@ def generate_orders(start_id, num_orders, order_type="mixed"):
 
     df = pd.DataFrame(
         {
-            "order_id": ids,
+            "id": ids,
             "symbol": symbols,
             "side": sides,
             "price": prices,
@@ -70,13 +70,13 @@ def generate_with_pandas(
                     df = generate_orders(current_id, size, order_type="limit")
 
                     if file_format == "csv":
-                        df.to_csv(file, header=not header_written, index=False)
-                        header_written = True
+                        df.to_csv(file, header=False, index=False)
                     elif file_format == "json":
                         df.to_json(file, orient="records", lines=True)
                     current_id += size
                     pbar.update(size)
-
+                    header_written = False
+    
             # MAIN RANDOM PHASE
             remaining_rows = total_rows - warmup_rows
             for start in range(0, remaining_rows, batch_size):
@@ -84,8 +84,7 @@ def generate_with_pandas(
                 df = generate_orders(current_id, size, order_type="mixed")
 
                 if file_format == "csv":
-                    df.to_csv(file, header=not header_written, index=False)
-                    header_written = True
+                    df.to_csv(file, header=False, index=False)
                 elif file_format == "json":
                     df.to_json(file, orient="records", lines=True)
 
