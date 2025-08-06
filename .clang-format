@@ -1,0 +1,71 @@
+---
+BasedOnStyle: Google
+Language: Cpp
+Standard: c++20  # Using C++20 as the latest fully supported standard
+
+# Basic formatting
+IndentWidth: 2
+ColumnLimit: 100
+UseTab: Never
+TabWidth: 2
+ContinuationIndentWidth: 4
+
+# Braces and brackets
+BreakBeforeBraces: Attach
+SpaceBeforeParens: ControlStatements
+SpacesInParentheses: false
+SpacesInSquareBrackets: false
+SpacesInAngles: false
+SpacesInContainerLiterals: false
+
+# Comments
+AlignTrailingComments: true
+ReflowComments: true
+
+# Classes and namespaces
+NamespaceIndentation: None
+AccessModifierOffset: -1
+FixNamespaceComments: true
+
+# Templates
+AlwaysBreakTemplateDeclarations: Yes
+
+# Function declarations/definitions
+AllowShortFunctionsOnASingleLine: Inline
+AllowShortLambdasOnASingleLine: All
+BinPackParameters: false
+BinPackArguments: false
+
+# Line breaks
+AllowAllParametersOfDeclarationOnNextLine: true
+BreakBeforeBinaryOperators: None
+BreakBeforeTernaryOperators: true
+BreakConstructorInitializers: BeforeColon
+BreakInheritanceList: BeforeColon
+
+# Indentation
+IndentCaseLabels: true
+IndentPPDirectives: AfterHash
+
+# Alignment
+AlignConsecutiveAssignments: false
+AlignConsecutiveDeclarations: false
+AlignEscapedNewlines: Left
+AlignOperands: true
+
+# C++11/14/17/20/23 specific
+SortIncludes: CaseSensitive
+SortUsingDeclarations: true
+SpaceAfterTemplateKeyword: true
+SpaceBeforeCtorInitializerColon: true
+SpaceBeforeInheritanceColon: true
+SpaceBeforeRangeBasedForLoopColon: true
+
+# Pointer alignment
+PointerAlignment: Left
+
+# Modern C++ features
+# These are compatible with C++20 and will help with C++23 code as well
+IndentRequiresClause: true     # For C++20 concepts
+RequiresClausePosition: OwnLine
+InsertBraces: true             # Safer code with explicit braces
