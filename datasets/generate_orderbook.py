@@ -29,6 +29,7 @@ def open_output_file(filename, compress):
 
 def generate_orders(start_id, num_orders, order_type="mixed"):
     ids = np.arange(start_id, start_id + num_orders, dtype=np.uint64)
+    symbols = np.random.choice(["AAPL", "GOOG", "MSFT", "TSLA"], size=num_orders)
     sides = np.random.choice(["BUY", "SELL"], size=num_orders)
     prices = np.round(np.random.uniform(9.50, 10.50, size=num_orders), 2)
     quantities = np.random.randint(1, 101, size=num_orders)
@@ -43,6 +44,7 @@ def generate_orders(start_id, num_orders, order_type="mixed"):
     df = pd.DataFrame(
         {
             "id": ids,
+            "symbol": symbols,
             "side": sides,
             "price": prices,
             "quantity": quantities,
@@ -71,11 +73,10 @@ def generate_with_pandas(
                         df.to_csv(file, header=False, index=False)
                     elif file_format == "json":
                         df.to_json(file, orient="records", lines=True)
-
-                    header_written = False
                     current_id += size
                     pbar.update(size)
-
+                    header_written = False
+    
             # MAIN RANDOM PHASE
             remaining_rows = total_rows - warmup_rows
             for start in range(0, remaining_rows, batch_size):

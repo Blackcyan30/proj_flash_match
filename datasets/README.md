@@ -97,6 +97,7 @@ python generate_order_book.py 1000000 \
 * Generates LOB fields:
 
   * `order_id`: integer (sequential)
+  * `symbol`: stock ticker, randomly chosen from a small set
   * `side`: `"BUY"` or `"SELL"`
   * `price`: float between `9.50` and `10.50`
   * `quantity`: integer from `1` to `100`
@@ -111,10 +112,10 @@ python generate_order_book.py 1000000 \
 ## 📊 Example Output (CSV)
 
 ```csv
-order_id,side,price,quantity,type
-1,BUY,9.95,20,LIMIT
-2,SELL,10.12,75,IOC
-3,BUY,9.88,54,LIMIT
+order_id,symbol,side,price,quantity,type
+1,AAPL,BUY,9.95,20,LIMIT
+2,GOOG,SELL,10.12,75,IOC
+3,MSFT,BUY,9.88,54,LIMIT
 ...
 ```
 
