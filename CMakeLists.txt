@@ -14,6 +14,7 @@ target_include_directories(lock_free_queue INTERFACE ${PROJECT_SOURCE_DIR}/inclu
 add_library(flashmatch_lib
   src/flashmatch.cpp
   src/order_book.cpp
+  src/matching_engine.cpp
 )
 
 target_include_directories(flashmatch_lib PUBLIC ${PROJECT_SOURCE_DIR}/include)
