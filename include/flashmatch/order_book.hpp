@@ -3,26 +3,12 @@
 #include <functional>
 #include <map>
 #include <vector>
+#include <types/order.hpp>
+#include <types/trade.hpp>
+#include <types/side.hpp>
+#include <types/ordertype.hpp> // Include necessary headers
 
 namespace fm {
-enum class Side { BUY, SELL };
-enum class OrderType { LIMIT, IOC };
-
-struct Order {
-  std::uint64_t id;
-  Side side;
-  double price;
-  std::uint64_t quantity;
-  OrderType type;
-};
-
-struct Trade {
-  std::uint64_t maker_id;
-  std::uint64_t taker_id;
-  double price;
-  std::uint64_t quantity;
-};
-
 class OrderBook {
 private:
   using OrderDeque = std::deque<Order>;
