@@ -41,7 +41,7 @@ To automate repeated runs and summarize latency metrics, use the helper
 script:
 
 ```bash
-scripts/run_bench.sh <data_file> <iterations> [core]
+./build/scripts/run_bench.sh <data_file> <iterations> [core]
 ```
 
 The script appends each run's output to `bench.log` and prints the mean,
