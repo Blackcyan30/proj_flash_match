@@ -106,7 +106,9 @@ stats_t run_bench(const std::string &filename) {
       std::cout << "Failed to parse line: " << warmup_line << std::endl;
       break;
     }
-    engine.submit(new_order);
+    // Prefill the matching engine without triggering any matching logic so that
+    // subsequent benchmark orders run against a fully populated book.
+    engine.insert(new_order);
     ++warmup_ct;
   }
 

@@ -30,19 +30,28 @@ for i in $(seq 1 "$iterations"); do
 done
 
 python3 - "$log" <<'PY' | tee -a "$log"
-import sys, re, statistics, numpy as np
+import sys, re, statistics
+
 path = sys.argv[1]
 values = []
+
 with open(path) as f:
     for line in f:
-        m = re.search(r"Mean latency:\s+([0-9.]+)", line)
-        if m:
-            values.append(float(m.group(1)))
+        match = re.search(r"Mean latency:\s+([0-9.]+)", line)
+        if match:
+            values.append(float(match.group(1)))
+
 if values:
-    print("Summary over", len(values), "runs")
-    print("Mean:", statistics.mean(values))
-    print("Median:", statistics.median(values))
-    print("p99:", float(np.percentile(values, 99)))
+    mean = statistics.mean(values)
+    median = statistics.median(values)
+    try:
+        p99 = statistics.quantiles(values, n=100)[98]
+    except statistics.StatisticsError:
+        p99 = values[-1]
+    print(f"Summary over {len(values)} runs")
+    print(f"Mean: {mean}")
+    print(f"Median: {median}")
+    print(f"p99: {p99}")
 else:
     print("No latency values found.")
 PY
