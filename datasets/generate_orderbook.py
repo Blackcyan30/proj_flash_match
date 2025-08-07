@@ -57,10 +57,10 @@ def generate_orders(start_id, num_orders, order_type="mixed"):
 def generate_with_pandas(
     filename, warmup_rows, total_rows, batch_size, compress, file_format
 ):
-    header_written = False
     current_id = 1
 
     with open_output_file(filename, compress) as file:
+        file.write(f"{total_rows},{warmup_rows}\n")
         with tqdm(total=total_rows, unit=" rows") as pbar:
 
             # WARMUP PHASE
@@ -75,8 +75,7 @@ def generate_with_pandas(
                         df.to_json(file, orient="records", lines=True)
                     current_id += size
                     pbar.update(size)
-                    header_written = False
-    
+
             # MAIN RANDOM PHASE
             remaining_rows = total_rows - warmup_rows
             for start in range(0, remaining_rows, batch_size):
