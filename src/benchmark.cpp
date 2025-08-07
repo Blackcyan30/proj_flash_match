@@ -48,6 +48,7 @@ int main(int argc, char *argv[]) {
   // stats_t stats1 = run_bench1(argv[1]);
   stats_t stats = run_bench(argv[1]);
   output_stats(stats);
+  std::cout << "Benchmark completed." << std::endl;
   return 0;
 }
 
@@ -107,8 +108,8 @@ stats_t run_bench(const std::string &filename) {
   std::vector<double> latencies;
   double worst_latency_us = 0.0;
 
-
   // Warm up the matching engine.
+  std::cout << "Warming up the matching engine with " << warmup_limit << " orders..." << std::endl;
   std::size_t warmup_ct = 0;
   std::string warmup_line;
   while (warmup_ct < warmup_limit && std::getline(file, warmup_line)) {
@@ -126,6 +127,7 @@ stats_t run_bench(const std::string &filename) {
   // Benchmark on the remaining lines.
   std::size_t bench_ct = 0;
   std::string line;
+  std::cout << "Starting benchmarking with " << bench_limit << " orders..." << std::endl;
   while (bench_ct < bench_limit && std::getline(file, line)) {
     Order new_order;
     if (!parse_order_line(line, new_order)) {
@@ -209,15 +211,15 @@ bool parse_order_line(std::string_view line, Order &out) {
  */
 void output_stats(const stats_t &stats) {
   std::cout << "=== Flashmatch Benchmark ===\n";
-  std::cout << "Total orders:          " << stats.total_orders << "\n";
-  std::cout << "Warmup orders:         " << stats.warmup_orders << "\n";
-  std::cout << "Orders processed:      " << stats.num_orders << "\n";
+  std::cout << "Total orders:          " << stats.total_orders << " micro-seconds" << "\n";
+  std::cout << "Warmup orders:         " << stats.warmup_orders << " micro-seconds" << "\n";
+  std::cout << "Orders processed:      " << stats.num_orders << " micro-seconds" << "\n";
   std::cout << std::fixed << std::setprecision(1);
-  std::cout << "Mean latency:          " << stats.mean_latency << std::endl;
-  std::cout << "Median latency:        " << stats.p50_latency << std::endl;
-  std::cout << "95th percentile:       " << stats.p95_latency << std::endl;
-  std::cout << "99th percentile:       " << stats.p99_latency << std::endl;
-  std::cout << "Worst-case latency:    " << stats.worst_latency_us << std::endl;
+  std::cout << "Mean latency:          " << stats.mean_latency << " micro-seconds" << std::endl;
+  std::cout << "Median latency:        " << stats.p50_latency << " micro-seconds" << std::endl;
+  std::cout << "95th percentile:       " << stats.p95_latency << " micro-seconds" << std::endl;
+  std::cout << "99th percentile:       " << stats.p99_latency << " micro-seconds" << std::endl;
+  std::cout << "Worst-case latency:    " << stats.worst_latency_us << " micro-seconds" << std::endl;
   // #ifdef __APPLE__
   //   std::cout << "CPU:                   Apple" << std::endl;
   // #else
