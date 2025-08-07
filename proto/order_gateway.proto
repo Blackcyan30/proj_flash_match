@@ -1,0 +1,31 @@
+syntax = "proto3";
+
+package flashmatch;
+
+enum Side {
+  BUY = 0;
+  SELL = 1;
+}
+
+enum OrderType {
+  LIMIT = 0;
+  IOC = 1;
+}
+
+message Order {
+  string symbol = 1;
+  uint64 id = 2;
+  Side side = 3;
+  double price = 4;
+  uint64 quantity = 5;
+  OrderType type = 6;
+}
+
+message Ack {
+  bool ok = 1;
+}
+
+service OrderGateway {
+  rpc SubmitOrder(Order) returns (Ack);
+}
+

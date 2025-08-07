@@ -2,12 +2,15 @@ add_executable(flashmatch_tests
   test_main.cpp
   test_lock_free_queue.cpp
   test_matching_engine.cpp
+  test_order_gateway.cpp
 )
 
 target_link_libraries(flashmatch_tests PRIVATE
   flashmatch_lib
   lock_free_queue
   gtest_main
+  order_gateway_proto
+  gRPC::grpc++
 )
 target_compile_options(flashmatch_tests PRIVATE -O3 -march=native)
 
