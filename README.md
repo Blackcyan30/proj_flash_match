@@ -30,22 +30,37 @@ From the repository root, run:
 
 ## Progress
 
-Days 1–4 complete. To benchmark, build and run `orderbook_bench`:
+Days 1–4 complete. To benchmark, build and run `orderbook_bench` against a dataset:
 
 ```bash
 cmake --build . --target orderbook_bench
-./orderbook_bench <data_file>
+./orderbook_bench <dataset>
 ```
 
-To automate repeated runs and summarize latency metrics, use the helper
-script:
+The executable reads the dataset, warms up the matching engine, and reports
+latency statistics (mean, median, p95, p99, and worst-case) for the processed
+orders.
+
+Example output:
 
 ```bash
-./build/scripts/run_bench.sh <data_file> <iterations> [core]
+$ ./orderbook_bench ../datasets/sample.csv
+Initializing Benchmark !
+Warming up the matching engine with 100 orders...
+Starting benchmarking with 900 orders...
+=== Flashmatch Benchmark ===
+Total orders:          1000
+Warmup orders:         100
+Orders processed:      900
+Mean latency:          3.2 micro-seconds
+Median latency:        3.1 micro-seconds
+95th percentile:       4.5 micro-seconds
+99th percentile:       5.7 micro-seconds
+Worst-case latency:    9.8 micro-seconds
+CPU:                   processor  : 0
+Compiler flags:        -O3 -march=native
+Benchmark completed.
 ```
-
-The script appends each run's output to `bench.log` and prints the mean,
-median, and p99 latencies across all iterations.
 
 ## License
 
