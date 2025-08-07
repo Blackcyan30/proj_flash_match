@@ -107,6 +107,7 @@ stats_t run_bench(const std::string &filename) {
   std::vector<double> latencies;
   double worst_latency_us = 0.0;
 
+
   // Warm up the matching engine.
   std::size_t warmup_ct = 0;
   std::string warmup_line;
