@@ -16,7 +16,10 @@
 
 #include "flashmatch/matching_engine.hpp"
 
-#include "flashmatch/matching_engine.hpp"
+namespace {
+// Number of orders submitted during warmup before measurements begin.
+constexpr std::size_t kWarmupLimit = 20'000'000;
+} 
 
 /**
  * @class stats_t
@@ -61,45 +64,36 @@ stats_t run_bench(const std::string &filename) {
     std::cout << "Failed to open file: " << filename << std::endl;
     return stats_t{0, 0.0, 0.0, 0.0, 0.0, 0.0};
   }
-  std::string line;
-  [[maybe_unused]] size_t total_samples = 0;
-  size_t warmup_limit = 0;
-  if (std::getline(file, line)) {
-    auto comma_pos = line.find(',');
-    if (comma_pos != std::string::npos) {
-      std::from_chars(line.data(), line.data() + comma_pos, total_samples);
-      std::from_chars(line.data() + comma_pos + 1,
-                      line.data() + line.size(), warmup_limit);
-    }
-  }
 
+  std::string line;
+  // Discarding the first line in the file as that just contains
+  // what values the columns will contain.
   fm::MatchingEngine engine;
   std::vector<double> latencies;
   double worst_latency_us = 0.0;
 
-  // Warmup for order book
-  size_t warmup_ct = 0;
+  // Warm up the matching engine with a fixed number of orders.
+  std::size_t warmup_ct = 0;
   std::string warmup_line;
-  while (warmup_ct < warmup_limit && std::getline(file, warmup_line)) {
+  while (std::getline(file, warmup_line)) {
     Order new_order;
     if (!parse_order_line(warmup_line, new_order)) {
       std::cout << "Failed to parse line: " << warmup_line << std::endl;
-      exit(EXIT_FAILURE);
+      break;
     }
-    engine.insert(new_order);
+    engine.submit(new_order);
     ++warmup_ct;
-    if (warmup_ct == WARMUP_LIMIT) {
+    if (warmup_ct == kWarmupLimit) {
       break;
     }
   }
 
   // start of bench.
-  std::cout << "Starting Benchmark!" << std::endl;
   while (std::getline(file, line)) {
     Order new_order;
     if (!parse_order_line(line, new_order)) {
       std::cout << "Failed to parse line: " << line << std::endl;
-      exit(EXIT_FAILURE);
+      break;
     }
 
     auto start{std::chrono::steady_clock::now()};
@@ -113,10 +107,6 @@ stats_t run_bench(const std::string &filename) {
   }
 
   file.close();
-  if (ct == 0) {
-    std::cerr << "Warning: no orders processed after warmup." << std::endl;
-    return stats_t{0, 0.0, 0.0, 0.0};
-  }
 
   if (latencies.empty()) {
     return stats_t{0, 0.0, 0.0, 0.0, 0.0, 0.0};
