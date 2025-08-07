@@ -7,3 +7,4 @@ tmp/
 */build
 *.cmake
 /datasets/*.csv
+.vscode/

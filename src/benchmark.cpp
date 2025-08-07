@@ -2,15 +2,16 @@
  * @file benchmark.cpp
  * @details This file contains the benchmark code for the order book.
  */
-#include "flashmatch/matching_engine.hpp"
 #include <array>
-#include <charconv> // for std::from_chars
+#include <charconv>  // for std::from_chars
 #include <chrono>
 #include <fstream>
 #include <iomanip>
 #include <iostream>
 #include <string>
 #include <string_view>
+
+#include "flashmatch/matching_engine.hpp"
 
 /**
  * @class stats_t
@@ -25,8 +26,8 @@ struct stats_t {
 };
 
 // Configuration for histogram
-constexpr int BIN_WIDTH_US = 1;      // bin size in microseconds
-constexpr int MAX_LATENCY_US = 5000; // cover up to 5000 µs
+constexpr int BIN_WIDTH_US = 1;       // bin size in microseconds
+constexpr int MAX_LATENCY_US = 5000;  // cover up to 5000 µs
 constexpr int NUM_BINS = MAX_LATENCY_US / BIN_WIDTH_US;
 
 stats_t run_bench(const std::string &filename);
@@ -34,7 +35,7 @@ bool parse_order_line(std::string_view line, Order &out);
 void output_stats(const stats_t &stats);
 
 int main(int argc, char *argv[]) {
-  std::cout << "Starting benchmark!" << std::endl;
+  std::cout << "Initializing Benchmark !" << std::endl;
   if (argc < 2) {
     std::cout << "Usage: ./orderbook_bench <data_filename>" << std::endl;
     exit(EXIT_FAILURE);
@@ -69,27 +70,30 @@ stats_t run_bench(const std::string &filename) {
   std::array<size_t, NUM_BINS> histogram{};
 
   // Warmup for order book
-  constexpr size_t WARMUP_LIMIT = 20000000;
+  constexpr size_t WARMUP_LIMIT = 2000000;
+  std::cout << "Warming up the order book with " << WARMUP_LIMIT << " orders." << std::endl;
   size_t warmup_ct = 0;
   std::string warmup_line;
   while (std::getline(file, warmup_line)) {
     Order new_order;
     if (!parse_order_line(warmup_line, new_order)) {
       std::cout << "Failed to parse line: " << warmup_line << std::endl;
+      exit(EXIT_FAILURE);
+    }
+    engine.insert(new_order);
+    ++warmup_ct;
+    if (warmup_ct == WARMUP_LIMIT) {
       break;
     }
-    engine.submit(new_order);
-    ++warmup_ct;
-    if (warmup_ct == WARMUP_LIMIT)
-      break;
   }
 
   // start of bench.
+  std::cout << "Starting Benchmark!" << std::endl;
   while (std::getline(file, line)) {
     Order new_order;
     if (!parse_order_line(line, new_order)) {
       std::cout << "Failed to parse line: " << line << std::endl;
-      break;
+      exit(EXIT_FAILURE);
     }
 
     auto start{std::chrono::steady_clock::now()};
@@ -104,8 +108,9 @@ stats_t run_bench(const std::string &filename) {
     ++ct;
 
     int bin_index = static_cast<int>(latency_us / BIN_WIDTH_US);
-    if (bin_index >= NUM_BINS)
+    if (bin_index >= NUM_BINS) {
       bin_index = NUM_BINS - 1;
+    }
     ++histogram[bin_index];
   }
 
@@ -141,20 +146,19 @@ bool parse_order_line(std::string_view line, Order &out) {
 
   for (int i = 0; i < 5; ++i) {
     end = line.find(',', start);
-    if (end == std::string_view::npos)
+    if (end == std::string_view::npos) {
       return false;
+    }
     tokens[i] = line.substr(start, end - start);
     start = end + 1;
   }
-  tokens[5] = line.substr(start); // last token
+  tokens[5] = line.substr(start);  // last token
 
-  std::from_chars(tokens[0].data(), tokens[0].data() + tokens[0].size(),
-                  out.id);
+  std::from_chars(tokens[0].data(), tokens[0].data() + tokens[0].size(), out.id);
   out.symbol = std::string(tokens[1]);
   out.side = (tokens[2] == "BUY") ? Side::BUY : Side::SELL;
   out.price = std::atof(tokens[3].data());
-  std::from_chars(tokens[4].data(), tokens[4].data() + tokens[4].size(),
-                  out.quantity);
+  std::from_chars(tokens[4].data(), tokens[4].data() + tokens[4].size(), out.quantity);
   out.type = (tokens[5] == "IOC") ? OrderType::IOC : OrderType::LIMIT;
 
   return true;
