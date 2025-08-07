@@ -11,14 +11,21 @@ iterations=$2
 core=${3:-0}
 log="bench.log"
 
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+exe="${SCRIPT_DIR}/../orderbook_bench"
+if [ ! -x "$exe" ]; then
+    echo "Executable not found: $exe" >&2
+    exit 1
+fi
+
 rm -f "$log"
 
 for i in $(seq 1 "$iterations"); do
     echo "Run $i:" >> "$log"
     if command -v taskset >/dev/null 2>&1; then
-        taskset -c "$core" ./orderbook_bench "$dataset" >> "$log"
+        taskset -c "$core" "$exe" "$dataset" >> "$log"
     else
-        ./orderbook_bench "$dataset" >> "$log"
+        "$exe" "$dataset" >> "$log"
     fi
 done
 

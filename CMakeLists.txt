@@ -41,4 +41,12 @@ FetchContent_MakeAvailable(googletest)
 
 enable_testing()
 include(GoogleTest)
+# Copy helper scripts into the build directory for convenience
+add_custom_target(copy_scripts ALL
+    COMMAND ${CMAKE_COMMAND} -E copy_directory
+            ${CMAKE_SOURCE_DIR}/scripts
+            ${CMAKE_BINARY_DIR}/scripts
+    COMMENT "Copying scripts to build directory"
+)
+
 add_subdirectory(tests)
