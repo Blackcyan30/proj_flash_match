@@ -37,16 +37,6 @@ cmake --build . --target orderbook_bench
 ./orderbook_bench <data_file>
 ```
 
-To automate repeated runs and summarize latency metrics, use the helper
-script:
-
-```bash
-./build/scripts/run_bench.sh <data_file> <iterations> [core]
-```
-
-The script appends each run's output to `bench.log` and prints the mean,
-median, and p99 latencies across all iterations.
-
 ## License
 
 Flashmatch is licensed under the [MIT](LICENSE) License.
