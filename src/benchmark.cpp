@@ -16,11 +16,6 @@
 
 #include "flashmatch/matching_engine.hpp"
 
-namespace {
-// Number of orders submitted during warmup before measurements begin.
-constexpr std::size_t kWarmupLimit = 20'000'000;
-} 
-
 /**
  * @class stats_t
  * @brief
@@ -65,17 +60,47 @@ stats_t run_bench(const std::string &filename) {
     return stats_t{0, 0.0, 0.0, 0.0, 0.0, 0.0};
   }
 
-  std::string line;
-  // Discarding the first line in the file as that just contains
-  // what values the columns will contain.
   fm::MatchingEngine engine;
   std::vector<double> latencies;
   double worst_latency_us = 0.0;
 
-  // Warm up the matching engine with a fixed number of orders.
+  std::size_t warmup_limit = 0;
+  std::size_t bench_limit = 0;
+
+  std::string header_line;
+  if (!std::getline(file, header_line)) {
+    std::cout << "Error: missing header line" << std::endl;
+    return stats_t{0, 0.0, 0.0, 0.0, 0.0, 0.0};
+  }
+
+  std::size_t total_rows = 0;
+  std::size_t warmup_rows = 0;
+  std::string_view header_sv(header_line);
+  auto delim = header_sv.find_first_of(", ");
+  if (delim == std::string_view::npos) {
+    std::cout << "Error: malformed header" << std::endl;
+    return stats_t{0, 0.0, 0.0, 0.0, 0.0, 0.0};
+  }
+  auto first = header_sv.substr(0, delim);
+  auto rest_start = header_sv.find_first_not_of(", ", delim);
+  if (rest_start == std::string_view::npos) {
+    std::cout << "Error: malformed header" << std::endl;
+    return stats_t{0, 0.0, 0.0, 0.0, 0.0, 0.0};
+  }
+  auto second = header_sv.substr(rest_start);
+  if (std::from_chars(first.data(), first.data() + first.size(), total_rows).ec != std::errc{} ||
+      std::from_chars(second.data(), second.data() + second.size(), warmup_rows).ec != std::errc{}) {
+    std::cout << "Error: malformed header" << std::endl;
+    return stats_t{0, 0.0, 0.0, 0.0, 0.0, 0.0};
+  }
+
+  warmup_limit = std::min(warmup_rows, total_rows);
+  bench_limit = total_rows - warmup_limit;
+
+  // Warm up the matching engine.
   std::size_t warmup_ct = 0;
   std::string warmup_line;
-  while (std::getline(file, warmup_line)) {
+  while (warmup_ct < warmup_limit && std::getline(file, warmup_line)) {
     Order new_order;
     if (!parse_order_line(warmup_line, new_order)) {
       std::cout << "Failed to parse line: " << warmup_line << std::endl;
@@ -83,13 +108,12 @@ stats_t run_bench(const std::string &filename) {
     }
     engine.submit(new_order);
     ++warmup_ct;
-    if (warmup_ct == kWarmupLimit) {
-      break;
-    }
   }
 
-  // start of bench.
-  while (std::getline(file, line)) {
+  // Benchmark on the remaining lines.
+  std::size_t bench_ct = 0;
+  std::string line;
+  while (bench_ct < bench_limit && std::getline(file, line)) {
     Order new_order;
     if (!parse_order_line(line, new_order)) {
       std::cout << "Failed to parse line: " << line << std::endl;
@@ -104,6 +128,7 @@ stats_t run_bench(const std::string &filename) {
     double latency_us = time_elapsed.count();
     latencies.push_back(latency_us);
     worst_latency_us = std::max(latency_us, worst_latency_us);
+    ++bench_ct;
   }
 
   file.close();
