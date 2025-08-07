@@ -59,10 +59,18 @@ stats_t run_bench(const std::string &filename) {
     std::cout << "Failed to open file: " << filename << std::endl;
     return stats_t{0, 0.0, 0.0, 0.0};
   }
-
   std::string line;
-  // Discarding the first line in the file as that just contains
-  // what values the columns will contain.
+  [[maybe_unused]] size_t total_samples = 0;
+  size_t warmup_limit = 0;
+  if (std::getline(file, line)) {
+    auto comma_pos = line.find(',');
+    if (comma_pos != std::string::npos) {
+      std::from_chars(line.data(), line.data() + comma_pos, total_samples);
+      std::from_chars(line.data() + comma_pos + 1,
+                      line.data() + line.size(), warmup_limit);
+    }
+  }
+
   fm::MatchingEngine engine;
   size_t ct = 0;
   std::chrono::duration<double, std::micro> total_latencies_us{0};
@@ -70,11 +78,9 @@ stats_t run_bench(const std::string &filename) {
   std::array<size_t, NUM_BINS> histogram{};
 
   // Warmup for order book
-  constexpr size_t WARMUP_LIMIT = 2000000;
-  std::cout << "Warming up the order book with " << WARMUP_LIMIT << " orders." << std::endl;
   size_t warmup_ct = 0;
   std::string warmup_line;
-  while (std::getline(file, warmup_line)) {
+  while (warmup_ct < warmup_limit && std::getline(file, warmup_line)) {
     Order new_order;
     if (!parse_order_line(warmup_line, new_order)) {
       std::cout << "Failed to parse line: " << warmup_line << std::endl;
@@ -82,9 +88,6 @@ stats_t run_bench(const std::string &filename) {
     }
     engine.insert(new_order);
     ++warmup_ct;
-    if (warmup_ct == WARMUP_LIMIT) {
-      break;
-    }
   }
 
   // start of bench.
