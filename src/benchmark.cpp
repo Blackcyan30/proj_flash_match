@@ -41,13 +41,55 @@ void output_stats(const stats_t &stats);
 
 int main(int argc, char *argv[]) {
   std::cout << "Initializing Benchmark !" << std::endl;
-  if (argc < 2) {
-    std::cout << "Usage: ./orderbook_bench <data_filename>" << std::endl;
-    exit(EXIT_FAILURE);
+
+  if (argc < 3) {
+    std::cout << "Usage: orderbook_bench <dataset> <iterations>" << std::endl;
+    return EXIT_FAILURE;
   }
-  // stats_t stats1 = run_bench1(argv[1]);
-  stats_t stats = run_bench(argv[1]);
-  output_stats(stats);
+
+  std::string dataset = argv[1];
+
+  int iterations = 0;
+  std::string_view iter_sv(argv[2]);
+  auto [iter_ptr, iter_ec] =
+      std::from_chars(iter_sv.data(), iter_sv.data() + iter_sv.size(), iterations);
+  if (iter_ec != std::errc{} || iterations <= 0) {
+    std::cout << "Invalid iterations value: " << iter_sv << std::endl;
+    return EXIT_FAILURE;
+  }
+
+  std::vector<double> run_latencies;
+  stats_t last_stats{};
+  for (int i = 0; i < iterations; ++i) {
+    last_stats = run_bench(dataset);
+    run_latencies.push_back(last_stats.mean_latency);
+  }
+
+  if (run_latencies.empty()) {
+    return 0;
+  }
+
+  stats_t aggregated = last_stats;
+  aggregated.mean_latency = std::accumulate(run_latencies.begin(), run_latencies.end(), 0.0) /
+                            static_cast<double>(run_latencies.size());
+
+  std::vector<double> temp = run_latencies;
+  auto idx50 = temp.begin() + static_cast<std::size_t>(0.50 * static_cast<double>(temp.size()));
+  std::nth_element(temp.begin(), idx50, temp.end());
+  aggregated.p50_latency = *idx50;
+
+  temp = run_latencies;
+  auto idx95 = temp.begin() + static_cast<std::size_t>(0.95 * static_cast<double>(temp.size()));
+  std::nth_element(temp.begin(), idx95, temp.end());
+  aggregated.p95_latency = *idx95;
+
+  temp = run_latencies;
+  auto idx99 = temp.begin() + static_cast<std::size_t>(0.99 * static_cast<double>(temp.size()));
+  std::nth_element(temp.begin(), idx99, temp.end());
+  aggregated.p99_latency = *idx99;
+  aggregated.worst_latency_us = *std::max_element(run_latencies.begin(), run_latencies.end());
+
+  output_stats(aggregated);
   std::cout << "Benchmark completed." << std::endl;
   return 0;
 }
@@ -220,13 +262,5 @@ void output_stats(const stats_t &stats) {
   std::cout << "95th percentile:       " << stats.p95_latency << " micro-seconds" << std::endl;
   std::cout << "99th percentile:       " << stats.p99_latency << " micro-seconds" << std::endl;
   std::cout << "Worst-case latency:    " << stats.worst_latency_us << " micro-seconds" << std::endl;
-  // #ifdef __APPLE__
-  //   std::cout << "CPU:                   Apple" << std::endl;
-  // #else
-  std::ifstream cpuinfo("/proc/cpuinfo");
-  std::string model;
-  std::getline(cpuinfo, model);
-  std::cout << "CPU:                   " << model << '\n';
-  // #endif
   std::cout << "Compiler flags:        -O3 -march=native" << std::endl;
 }
