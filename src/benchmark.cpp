@@ -253,9 +253,9 @@ bool parse_order_line(std::string_view line, Order &out) {
  */
 void output_stats(const stats_t &stats) {
   std::cout << "=== Flashmatch Benchmark ===\n";
-  std::cout << "Total orders:          " << stats.total_orders << " micro-seconds" << "\n";
-  std::cout << "Warmup orders:         " << stats.warmup_orders << " micro-seconds" << "\n";
-  std::cout << "Orders processed:      " << stats.num_orders << " micro-seconds" << "\n";
+  std::cout << "Total orders:          " << stats.total_orders << "\n";
+  std::cout << "Warmup orders:         " << stats.warmup_orders << "\n";
+  std::cout << "Orders processed:      " << stats.num_orders << "\n";
   std::cout << std::fixed << std::setprecision(1);
   std::cout << "Mean latency:          " << stats.mean_latency << " micro-seconds" << std::endl;
   std::cout << "Median latency:        " << stats.p50_latency << " micro-seconds" << std::endl;
