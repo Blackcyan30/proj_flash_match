@@ -88,6 +88,10 @@ stats_t run_bench(const std::string &filename) {
     }
     engine.insert(new_order);
     ++warmup_ct;
+    if (warmup_ct == WARMUP_LIMIT) {
+      break;
+    }
+
   }
 
   // start of bench.
@@ -118,6 +122,10 @@ stats_t run_bench(const std::string &filename) {
   }
 
   file.close();
+  if (ct == 0) {
+    std::cerr << "Warning: no orders processed after warmup." << std::endl;
+    return stats_t{0, 0.0, 0.0, 0.0};
+  }
 
   double mean_latency = total_latencies_us.count() / ct;
   size_t threshold = static_cast<size_t>(ct * 0.99);
