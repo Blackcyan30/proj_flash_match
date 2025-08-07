@@ -2,15 +2,19 @@
  * @file benchmark.cpp
  * @details This file contains the benchmark code for the order book.
  */
-#include "flashmatch/matching_engine.hpp"
+#include <algorithm>
 #include <array>
-#include <charconv> // for std::from_chars
+#include <charconv>  // for std::from_chars
 #include <chrono>
 #include <fstream>
 #include <iomanip>
 #include <iostream>
+#include <numeric>
 #include <string>
 #include <string_view>
+#include <vector>
+
+#include "flashmatch/matching_engine.hpp"
 
 /**
  * @class stats_t
@@ -20,14 +24,11 @@
 struct stats_t {
   size_t num_orders;
   double mean_latency;
+  double p50_latency;
+  double p95_latency;
   double p99_latency;
   double worst_latency_us;
 };
-
-// Configuration for histogram
-constexpr int BIN_WIDTH_US = 1;      // bin size in microseconds
-constexpr int MAX_LATENCY_US = 5000; // cover up to 5000 µs
-constexpr int NUM_BINS = MAX_LATENCY_US / BIN_WIDTH_US;
 
 stats_t run_bench(const std::string &filename);
 bool parse_order_line(std::string_view line, Order &out);
@@ -56,17 +57,15 @@ stats_t run_bench(const std::string &filename) {
 
   if (!file.is_open()) {
     std::cout << "Failed to open file: " << filename << std::endl;
-    return stats_t{0, 0.0, 0.0, 0.0};
+    return stats_t{0, 0.0, 0.0, 0.0, 0.0, 0.0};
   }
 
   std::string line;
   // Discarding the first line in the file as that just contains
   // what values the columns will contain.
   fm::MatchingEngine engine;
-  size_t ct = 0;
-  std::chrono::duration<double, std::micro> total_latencies_us{0};
+  std::vector<double> latencies;
   double worst_latency_us = 0.0;
-  std::array<size_t, NUM_BINS> histogram{};
 
   // Warmup for order book
   constexpr size_t WARMUP_LIMIT = 20000000;
@@ -80,8 +79,9 @@ stats_t run_bench(const std::string &filename) {
     }
     engine.submit(new_order);
     ++warmup_ct;
-    if (warmup_ct == WARMUP_LIMIT)
+    if (warmup_ct == WARMUP_LIMIT) {
       break;
+    }
   }
 
   // start of bench.
@@ -97,35 +97,35 @@ stats_t run_bench(const std::string &filename) {
     auto finish{std::chrono::steady_clock::now()};
 
     std::chrono::duration<double, std::micro> time_elapsed{finish - start};
-
-    total_latencies_us += time_elapsed;
     double latency_us = time_elapsed.count();
+    latencies.push_back(latency_us);
     worst_latency_us = std::max(latency_us, worst_latency_us);
-    ++ct;
-
-    int bin_index = static_cast<int>(latency_us / BIN_WIDTH_US);
-    if (bin_index >= NUM_BINS)
-      bin_index = NUM_BINS - 1;
-    ++histogram[bin_index];
   }
 
   file.close();
 
-  double mean_latency = total_latencies_us.count() / ct;
-  size_t threshold = static_cast<size_t>(ct * 0.99);
-  size_t cumulative = 0;
-  int p99_bin = NUM_BINS - 1;
-
-  for (int i = 0; i < NUM_BINS; ++i) {
-    cumulative += histogram[i];
-    if (cumulative >= threshold) {
-      p99_bin = i;
-      break;
-    }
+  if (latencies.empty()) {
+    return stats_t{0, 0.0, 0.0, 0.0, 0.0, 0.0};
   }
-  double p99_latency = p99_bin * BIN_WIDTH_US;
 
-  return stats_t{ct, mean_latency, p99_latency, worst_latency_us};
+  double mean_latency = std::accumulate(latencies.begin(), latencies.end(), 0.0) /
+                        static_cast<double>(latencies.size());
+
+  std::vector<double> temp = latencies;
+  auto idx50 = temp.begin() + static_cast<size_t>(0.50 * temp.size());
+  std::nth_element(temp.begin(), idx50, temp.end());
+  double p50_latency = *idx50;
+
+  auto idx95 = temp.begin() + static_cast<size_t>(0.95 * temp.size());
+  std::nth_element(temp.begin(), idx95, temp.end());
+  double p95_latency = *idx95;
+
+  auto idx99 = temp.begin() + static_cast<size_t>(0.99 * temp.size());
+  std::nth_element(temp.begin(), idx99, temp.end());
+  double p99_latency = *idx99;
+
+  return stats_t{
+      latencies.size(), mean_latency, p50_latency, p95_latency, p99_latency, worst_latency_us};
 }
 
 /**
@@ -141,20 +141,19 @@ bool parse_order_line(std::string_view line, Order &out) {
 
   for (int i = 0; i < 5; ++i) {
     end = line.find(',', start);
-    if (end == std::string_view::npos)
+    if (end == std::string_view::npos) {
       return false;
+    }
     tokens[i] = line.substr(start, end - start);
     start = end + 1;
   }
-  tokens[5] = line.substr(start); // last token
+  tokens[5] = line.substr(start);  // last token
 
-  std::from_chars(tokens[0].data(), tokens[0].data() + tokens[0].size(),
-                  out.id);
+  std::from_chars(tokens[0].data(), tokens[0].data() + tokens[0].size(), out.id);
   out.symbol = std::string(tokens[1]);
   out.side = (tokens[2] == "BUY") ? Side::BUY : Side::SELL;
   out.price = std::atof(tokens[3].data());
-  std::from_chars(tokens[4].data(), tokens[4].data() + tokens[4].size(),
-                  out.quantity);
+  std::from_chars(tokens[4].data(), tokens[4].data() + tokens[4].size(), out.quantity);
   out.type = (tokens[5] == "IOC") ? OrderType::IOC : OrderType::LIMIT;
 
   return true;
@@ -169,7 +168,9 @@ void output_stats(const stats_t &stats) {
   std::cout << "=== Flashmatch Benchmark ===\n";
   std::cout << "Orders processed:      " << stats.num_orders << "\n";
   std::cout << std::fixed << std::setprecision(1);
-  std::cout << "Mean latency:        " << stats.mean_latency << std::endl;
+  std::cout << "Mean latency:          " << stats.mean_latency << std::endl;
+  std::cout << "Median latency:        " << stats.p50_latency << std::endl;
+  std::cout << "95th percentile:       " << stats.p95_latency << std::endl;
   std::cout << "99th percentile:       " << stats.p99_latency << std::endl;
   std::cout << "Worst-case latency:    " << stats.worst_latency_us << std::endl;
   // #ifdef __APPLE__
