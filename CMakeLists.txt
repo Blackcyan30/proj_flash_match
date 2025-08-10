@@ -48,24 +48,41 @@ set(GENERATED_HDRS
   ${GENERATED_DIR}/order_gateway.grpc.pb.h                  # gRPC service headers
 )
 
-# This command runs the protoc compiler to generate C++ code
-add_custom_command(
-  OUTPUT ${GENERATED_SRCS} ${GENERATED_HDRS}                # Generated files
-  COMMAND ${PROTOC}                                         # The protobuf compiler
-  ARGS
-    -I ${PROTO_DIR}                                         # Where to find .proto files
-    --cpp_out=${GENERATED_DIR}                              # Generate regular protobuf code
-    --grpc_out=${GENERATED_DIR}                             # Generate gRPC service code
-    --plugin=protoc-gen-grpc=${GRPC_CPP_PLUGIN}             # Use the gRPC plugin
-    ${PROTO_FILE}                                           # Input .proto file
-  DEPENDS ${PROTO_FILE}                                     # Dependencies
-  COMMENT "Generating C++ sources from ${PROTO_FILE}"
-  VERBATIM
-)
+# Check if the generated files already exist
+set(NEEDS_GENERATION FALSE)
+foreach(FILE ${GENERATED_SRCS} ${GENERATED_HDRS})
+  if(NOT EXISTS ${FILE})
+    set(NEEDS_GENERATION TRUE)
+    break()
+  endif()
+endforeach()
 
-add_custom_target(generate_proto_cpp
-  DEPENDS ${GENERATED_SRCS} ${GENERATED_HDRS}
-)
+message(STATUS "Checking for generated protobuf files...")
+if(NEEDS_GENERATION)
+  message(STATUS "  Missing generated files - will generate from ${PROTO_FILE}")
+  
+  # This command runs the protoc compiler to generate C++ code
+  add_custom_command(
+    OUTPUT ${GENERATED_SRCS} ${GENERATED_HDRS}                # Generated files
+    COMMAND ${PROTOC}                                         # The protobuf compiler
+    ARGS
+      -I ${PROTO_DIR}                                         # Where to find .proto files
+      --cpp_out=${GENERATED_DIR}                              # Generate regular protobuf code
+      --grpc_out=${GENERATED_DIR}                             # Generate gRPC service code
+      --plugin=protoc-gen-grpc=${GRPC_CPP_PLUGIN}             # Use the gRPC plugin
+      ${PROTO_FILE}                                           # Input .proto file
+    DEPENDS ${PROTO_FILE}                                     # Dependencies
+    COMMENT "Generating C++ sources from ${PROTO_FILE}"
+    VERBATIM
+  )
+  
+  add_custom_target(generate_proto_cpp
+    DEPENDS ${GENERATED_SRCS} ${GENERATED_HDRS}
+  )
+else()
+  message(STATUS "  All generated protobuf files exist - skipping generation")
+  add_custom_target(generate_proto_cpp)
+endif()
 
 # A tiny library to house generated files so linking is simple
 add_library(order_gateway_proto ${GENERATED_SRCS})
@@ -73,9 +90,6 @@ add_dependencies(order_gateway_proto generate_proto_cpp)
 target_include_directories(order_gateway_proto PUBLIC ${GENERATED_DIR})
 target_link_libraries(order_gateway_proto PUBLIC protobuf::libprotobuf gRPC::grpc++)
 set_property(TARGET order_gateway_proto PROPERTY CXX_STANDARD 20)
-
-# Make sure these files are built regardless of which target is being built
-add_custom_target(proto_always ALL DEPENDS generate_proto_cpp)
 
 # ---- Your core library / executables -----------------------------------------
 add_library(flashmatch_lib
