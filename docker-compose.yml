@@ -1,0 +1,20 @@
+version: '3.8'
+
+services:
+  flashmatch:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        # Set architecture based on host
+        ARCH: ${ARCH:-aarch64}
+        GRPC_VERSION: ${GRPC_VERSION:-v1.74.0}  # Use latest stable gRPC version by default
+    volumes:
+      - .:/flashmatch  # Mount current directory to /flashmatch in container
+      - /run/host-services/ssh-auth.sock:/ssh-agent  # SSH agent forwarding
+    environment:
+      - SSH_AUTH_SOCK=/ssh-agent
+    working_dir: /flashmatch
+    # Keep container running
+    stdin_open: true
+    tty: true
