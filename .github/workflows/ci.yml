@@ -11,9 +11,19 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
-      - name: Configure
-        run: cmake -S . -B build
+      - name: Build Docker image
+        run: docker build -t flashmatch-ci .
+      - name: Configure CMake
+        run: docker run --rm -v ${{ github.workspace }}:/flashmatch -w /flashmatch flashmatch-ci cmake -S . -B build
       - name: Build
-        run: cmake --build build
-      - name: Test
-        run: ctest --test-dir build --output-on-failure
+        run: docker run --rm -v ${{ github.workspace }}:/flashmatch -w /flashmatch flashmatch-ci make -j 4 -C build
+      - name: Run tests
+        run: docker run --rm -v ${{ github.workspace }}:/flashmatch -w /flashmatch flashmatch-ci ctest --test-dir build --output-on-failure
+      - name: Run benchmark
+        run: |
+          cat <<'EOF' > sample_dataset.csv
+          2,1
+          1,AAPL,BUY,10.0,100,LIMIT
+          2,AAPL,SELL,10.0,100,IOC
+          EOF
+          docker run --rm -v ${{ github.workspace }}:/flashmatch -w /flashmatch flashmatch-ci ./build/orderbook_bench sample_dataset.csv 1

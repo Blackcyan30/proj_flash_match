@@ -111,16 +111,14 @@ target_link_libraries(orderbook_bench PRIVATE flashmatch_lib)
 target_compile_options(orderbook_bench PRIVATE -O3 -march=native)
 set_property(TARGET orderbook_bench PROPERTY CXX_STANDARD 20)
 
-# The gRPC server and client executables are commented out because
-# their source files are empty. Uncomment these when you implement them.
+# gRPC server and client examples
+add_executable(order_gateway_server src/order_gateway_server.cpp)
+target_link_libraries(order_gateway_server PRIVATE order_gateway_proto lock_free_queue gRPC::grpc++)
+set_property(TARGET order_gateway_server PROPERTY CXX_STANDARD 20)
 
-# add_executable(order_gateway_server src/order_gateway_server.cpp)
-# target_link_libraries(order_gateway_server PRIVATE order_gateway_proto lock_free_queue gRPC::grpc++)
-# set_property(TARGET order_gateway_server PROPERTY CXX_STANDARD 20)
-
-# add_executable(order_gateway_client src/order_gateway_client.cpp)
-# target_link_libraries(order_gateway_client PRIVATE order_gateway_proto gRPC::grpc++)
-# set_property(TARGET order_gateway_client PROPERTY CXX_STANDARD 20)
+add_executable(order_gateway_client src/order_gateway_client.cpp)
+target_link_libraries(order_gateway_client PRIVATE order_gateway_proto gRPC::grpc++)
+set_property(TARGET order_gateway_client PROPERTY CXX_STANDARD 20)
 
 # ---- Tests --------------------------------------------------------------------
 include(CTest)
