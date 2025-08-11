@@ -1,8 +1,10 @@
 #include <iostream>
+#include <memory>
+#include <string>
 
 #include <grpcpp/grpcpp.h>
 
-#include "order_gateway.grpc.pb.h"
+#include "proto/order_gateway.grpc.pb.h"
 
 int main() {
   const std::string target_str{"localhost:50051"};
