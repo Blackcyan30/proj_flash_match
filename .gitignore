@@ -8,9 +8,3 @@ tmp/
 *.cmake
 /datasets/*.csv
 .vscode/
-
-# Generated protobuf files
-/proto/*.pb.h
-/proto/*.pb.cc
-/proto/*.grpc.pb.h
-/proto/*.grpc.pb.cc
