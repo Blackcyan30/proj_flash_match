@@ -5,6 +5,7 @@ project(Flashmatch LANGUAGES CXX)
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_POSITION_INDEPENDENT_CODE ON)
+set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
 # ---- Dependencies ------------------------------------------------------------
 # Find packages installed on the system
@@ -87,7 +88,7 @@ endif()
 # A tiny library to house generated files so linking is simple
 add_library(order_gateway_proto ${GENERATED_SRCS})
 add_dependencies(order_gateway_proto generate_proto_cpp)
-target_include_directories(order_gateway_proto PUBLIC ${GENERATED_DIR})
+target_include_directories(order_gateway_proto PUBLIC ${PROJECT_SOURCE_DIR})
 target_link_libraries(order_gateway_proto PUBLIC protobuf::libprotobuf gRPC::grpc++)
 set_property(TARGET order_gateway_proto PROPERTY CXX_STANDARD 20)
 
