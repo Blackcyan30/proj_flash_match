@@ -2,6 +2,8 @@ add_executable(flashmatch_tests
   test_main.cpp
   test_lock_free_queue.cpp
   test_matching_engine.cpp
+  benchmark_test.cpp
+  ../src/benchmark.cpp
 )
 
 target_link_libraries(flashmatch_tests PRIVATE

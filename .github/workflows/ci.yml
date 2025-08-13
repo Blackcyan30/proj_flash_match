@@ -1,4 +1,4 @@
-name: CMake
+name: CI
 
 on:
   push:
@@ -11,19 +11,39 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
-      - name: Build Docker image
-        run: docker build -t flashmatch-ci .
-      - name: Configure CMake
-        run: docker run --rm -v ${{ github.workspace }}:/flashmatch -w /flashmatch flashmatch-ci cmake -S . -B build
-      - name: Build
-        run: docker run --rm -v ${{ github.workspace }}:/flashmatch -w /flashmatch flashmatch-ci make -j 4 -C build
-      - name: Run tests
-        run: docker run --rm -v ${{ github.workspace }}:/flashmatch -w /flashmatch flashmatch-ci ctest --test-dir build --output-on-failure
-      - name: Run benchmark
+
+      - name: Log in to GHCR
+        uses: docker/login-action@v2
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Pull prebuilt image
+        run: docker pull ghcr.io/${{ github.repository_owner }}/flashmatch:ci
+
+      - name: Start container
         run: |
-          cat <<'EOF' > sample_dataset.csv
-          2,1
-          1,AAPL,BUY,10.0,100,LIMIT
-          2,AAPL,SELL,10.0,100,IOC
-          EOF
-          docker run --rm -v ${{ github.workspace }}:/flashmatch -w /flashmatch flashmatch-ci ./build/orderbook_bench sample_dataset.csv 1
+          docker run -d --name flashmatch-ci \
+            -v ${{ github.workspace }}:/flashmatch -w /flashmatch \
+            ghcr.io/${{ github.repository_owner }}/flashmatch:ci tail -f /dev/null
+
+      - name: Configure CMake
+        run: docker exec flashmatch-ci bash -lc 'mkdir -p build && cd build && cmake -S ..'
+
+      - name: Build
+        run: docker exec flashmatch-ci bash -lc 'cd build && make -j4'
+
+      - name: Generate benchmark dataset
+        run: |
+          if [ ! -f datasets/100mil-test-20mil-warm-bench-test.csv ]; then
+            printf "120000000\n20000000\nno\ncsv\n100mil-test-20mil-warm-bench-test.csv\n" |
+              docker exec -i flashmatch-ci python datasets/generate_orderbook.py
+          fi
+
+      - name: Run tests
+        run: docker exec flashmatch-ci bash -lc 'cd build && ctest --output-on-failure -V'
+
+      - name: Stop container
+        if: always()
+        run: docker stop flashmatch-ci
