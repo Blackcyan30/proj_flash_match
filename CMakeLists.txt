@@ -107,11 +107,6 @@ add_executable(flashmatch src/main.cpp)
 target_link_libraries(flashmatch PRIVATE flashmatch_lib)
 set_property(TARGET flashmatch PROPERTY CXX_STANDARD 20)
 
-add_executable(orderbook_bench src/benchmark.cpp)
-target_link_libraries(orderbook_bench PRIVATE flashmatch_lib)
-target_compile_options(orderbook_bench PRIVATE -O3 -march=native)
-set_property(TARGET orderbook_bench PROPERTY CXX_STANDARD 20)
-
 # gRPC server and client examples
 add_executable(order_gateway_server src/order_gateway_server.cpp)
 target_link_libraries(order_gateway_server PRIVATE order_gateway_proto lock_free_queue gRPC::grpc++)
