@@ -1,49 +1,105 @@
 name: CI
+# Human-friendly name shown in the Actions tab.
 
 on:
   push:
-    branches: [ main ]
+    branches: [main]
   pull_request:
-    branches: [ main ]
+    branches: [main]
+# Triggers: run on any push to main, and on PRs targeting main.
 
 jobs:
   build:
     runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v3
+    # Use a fresh GitHub-hosted Ubuntu runner VM.
 
-      - name: Log in to GHCR
-        uses: docker/login-action@v2
+    permissions:
+      contents: read
+      packages: read # needed to pull images from GHCR (private or public)
+    # 'permissions' controls what the runner’s GITHUB_TOKEN can access.
+    # - contents:read lets Actions read your repo.
+    # - packages:read allows pulling GHCR packages/images your repo has access to.
+
+    steps:
+      - uses: actions/checkout@v4
+      # Check out your repository code onto the runner at $GITHUB_WORKSPACE.
+
+      - name: Set lowercase owner (for GHCR)
+        run: echo "OWNER_LC=${GITHUB_REPOSITORY_OWNER,,}" >> $GITHUB_ENV
+      # Docker image repository paths must be lowercase.
+      # This exports OWNER_LC (lowercased repo owner) for later steps.
+
+      #######################################################################
+      # CURRENT MODE: Pull a prebuilt image from GHCR (NO local build here) #
+      #######################################################################
+
+      - name: Login to GHCR
+        uses: docker/login-action@v3
         with:
           registry: ghcr.io
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
+      # Logs the Docker client into GHCR using the workflow's token.
+      # This works for both public and private images under the same owner/org.
 
-      - name: Pull prebuilt image
-        run: docker pull ghcr.io/${{ github.repository_owner }}/flashmatch:ci
+      - name: Pull prebuilt image (flashmatch:2)
+        run: docker pull ghcr.io/${{ env.OWNER_LC }}/flashmatch:2
+      # Pull the exact prebuilt tag you pushed: ghcr.io/<owner>/flashmatch:2
+
+      #######################################################################
+      # OPTIONAL FUTURE MODE: Build image locally instead of pulling        #
+      # To use later, comment out the "Pull prebuilt image" step above and  #
+      # uncomment the two steps below.                                      #
+      #######################################################################
+      # - name: Build CI image (local)
+      #   run: docker build -t flashmatch:2 -f Dockerfile .
+      # Builds your CI image locally from the Dockerfile (slower, but no registry needed).
+      #
+      # - name: (Optional) Push local image to GHCR for caching/speed next runs
+      #   run: |
+      #     docker tag flashmatch:2 ghcr.io/${{ env.OWNER_LC }}/flashmatch:2
+      #     echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u "${{ github.actor }}" --password-stdin
+      #     docker push ghcr.io/${{ env.OWNER_LC }}/flashmatch:2
+
+      #######################################################################
+      # Common steps (work with either pulled or locally built image)       #
+      #######################################################################
 
       - name: Start container
         run: |
           docker run -d --name flashmatch-ci \
-            -v ${{ github.workspace }}:/flashmatch -w /flashmatch \
-            ghcr.io/${{ github.repository_owner }}/flashmatch:ci tail -f /dev/null
+            -v "$GITHUB_WORKSPACE":/flashmatch -w /flashmatch \
+            ghcr.io/${{ env.OWNER_LC }}/flashmatch:2 tail -f /dev/null
+      # Starts a background container named "flashmatch-ci" from your image.
+      # -v "$GITHUB_WORKSPACE":/flashmatch -> bind-mounts your repo into /flashmatch in the container,
+      #                                       so code and artifacts are shared.
+      # -w /flashmatch                      -> sets working directory inside the container.
+      # 'tail -f /dev/null' keeps the container alive for subsequent exec steps.
 
       - name: Configure CMake
         run: docker exec flashmatch-ci bash -lc 'mkdir -p build && cd build && cmake -S ..'
+      # docker exec ... runs a command inside the running container.
+      # 'bash -lc' runs a login shell so PATH and env are initialized.
+      # 'cmake -S ..' generates build system files using CMakeLists.txt at the repo root.
 
       - name: Build
-        run: docker exec flashmatch-ci bash -lc 'cd build && make -j4'
+        run: docker exec flashmatch-ci bash -lc 'cd build && make -j"$(nproc)"'
+      # Compile with all available cores inside the container.
 
-      - name: Generate benchmark dataset
+      - name: Generate benchmark dataset (only if missing)
         run: |
           if [ ! -f datasets/100mil-test-20mil-warm-bench-test.csv ]; then
-            printf "120000000\n20000000\nno\ncsv\n100mil-test-20mil-warm-bench-test.csv\n" |
+            printf "120000000\n20000000\nno\ncsv\n100mil-test-20mil-warm-bench-test.csv\n" | \
               docker exec -i flashmatch-ci python datasets/generate_orderbook.py
           fi
+      # Pipes interactive answers into your dataset generator script inside the container.
+      # Skips work if the CSV already exists in the repo path.
 
       - name: Run tests
         run: docker exec flashmatch-ci bash -lc 'cd build && ctest --output-on-failure -V'
+      # Runs your CTest suite in verbose mode; prints failing test logs.
 
-      - name: Stop container
+      - name: Cleanup
         if: always()
-        run: docker stop flashmatch-ci
+        run: docker rm -f flashmatch-ci || true
+      # Always remove the container at the end to avoid name collisions on retries.
