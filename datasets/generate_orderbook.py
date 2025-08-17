@@ -92,6 +92,15 @@ def generate_with_pandas(
 
 
 def main():
+    # Set fixed values for specific benchmark dataset
+    num_rows = 120_000_000
+    warmup_rows = 20_000_000
+    compress = False
+    file_format = "csv"
+    filename = "ob_100mil_bench_20mil_warm.csv"
+    
+    # Uncomment below lines if you want interactive input instead
+    """
     # Collect user input
     num_rows = int(input("Enter total number of rows to generate: "))
     warmup_rows = int(input("Enter number of warmup (LIMIT-only) rows: "))
@@ -100,6 +109,8 @@ def main():
     format_input = input("Choose file format (csv/json): ").strip().lower()
     file_format = format_input if format_input in ("csv", "json") else "csv"
     filename = input("Enter output filename (or leave blank for default): ").strip()
+    """
+    
 
     ram_gb = available_ram_gb()
     batch_size = auto_batch_size(num_rows, ram_gb)
@@ -107,10 +118,17 @@ def main():
     print(f"🧠 Available RAM: {ram_gb:.2f} GB")
     print(f"📦 Batch size: {batch_size}")
 
-    # Set default filename if not provided
-    ext = ".json" if file_format == "json" else ".csv"
-    output_file = filename or f"synthetic_order_book_{num_rows}{ext}"
-    if compress:
+    # Use the provided filename directly
+    output_file = filename
+    
+    # Only add extension if not already included in filename
+    if file_format == "json" and not filename.endswith(".json"):
+        output_file += ".json"
+    elif file_format == "csv" and not filename.endswith(".csv"):
+        output_file += ".csv"
+    
+    # Add compression extension if needed
+    if compress and not output_file.endswith(".gz"):
         output_file += ".gz"
 
     print(f"📁 Output file: {output_file}")

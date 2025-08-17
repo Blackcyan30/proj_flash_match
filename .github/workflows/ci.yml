@@ -69,12 +69,24 @@ jobs:
         run: |
           docker run -d --name flashmatch-ci \
             -v "$GITHUB_WORKSPACE":/flashmatch -w /flashmatch \
-            ghcr.io/${{ env.OWNER_LC }}/flashmatch:2 tail -f /dev/null
+            --entrypoint /bin/bash \
+            ghcr.io/${{ env.OWNER_LC }}/flashmatch:2 -lc "sleep infinity"
+      # ghcr.io/${{ env.OWNER_LC }}/flashmatch:2 tail -f /dev/null
       # Starts a background container named "flashmatch-ci" from your image.
       # -v "$GITHUB_WORKSPACE":/flashmatch -> bind-mounts your repo into /flashmatch in the container,
       #                                       so code and artifacts are shared.
       # -w /flashmatch                      -> sets working directory inside the container.
       # 'tail -f /dev/null' keeps the container alive for subsequent exec steps.
+
+      # For debug right after startup.
+      - name: Check container status
+        run: |
+          docker ps -a
+          docker inspect -f 'status={{.State.Status}} exit ={{.State.ExitCode}}'
+
+      - name: Show container logs if it exits
+        if: failure()
+        run: docker logs flashmatch-ci || true
 
       - name: Configure CMake
         run: docker exec flashmatch-ci bash -lc 'mkdir -p build && cd build && cmake -S ..'
@@ -88,11 +100,10 @@ jobs:
 
       - name: Generate benchmark dataset (only if missing)
         run: |
-          if [ ! -f datasets/100mil-test-20mil-warm-bench-test.csv ]; then
-            printf "120000000\n20000000\nno\ncsv\n100mil-test-20mil-warm-bench-test.csv\n" | \
-              docker exec -i flashmatch-ci python datasets/generate_orderbook.py
+          if [ ! -f datasets/ob_100mil_bench_20mil_warm.csv ]; then
+            docker exec flashmatch-ci python datasets/generate_orderbook.py
           fi
-      # Pipes interactive answers into your dataset generator script inside the container.
+      # Runs the dataset generator script directly without input (now uses hardcoded values)
       # Skips work if the CSV already exists in the repo path.
 
       - name: Run tests
