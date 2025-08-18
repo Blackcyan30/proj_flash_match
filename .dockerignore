@@ -1,0 +1,10 @@
+.git
+build/
+datasets/*.csv
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+*.log
+*.tmp
+.DS_Store

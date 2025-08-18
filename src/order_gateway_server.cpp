@@ -5,7 +5,7 @@
 #include <grpcpp/grpcpp.h>
 
 #include "flashmatch/order_queue.hpp"
-#include "proto/order_gateway.grpc.pb.h"
+#include "order_gateway.grpc.pb.h"
 #include "types/ordertype.hpp"
 #include "types/side.hpp"
 

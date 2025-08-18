@@ -4,7 +4,7 @@
 
 #include <grpcpp/grpcpp.h>
 
-#include "proto/order_gateway.grpc.pb.h"
+#include "order_gateway.grpc.pb.h"
 
 int main() {
   const std::string target_str{"localhost:50051"};

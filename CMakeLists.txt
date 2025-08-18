@@ -88,7 +88,8 @@ endif()
 # A tiny library to house generated files so linking is simple
 add_library(order_gateway_proto ${GENERATED_SRCS})
 add_dependencies(order_gateway_proto generate_proto_cpp)
-target_include_directories(order_gateway_proto PUBLIC ${PROJECT_SOURCE_DIR})
+# Add proto directory to include path so we can use simpler include statements
+target_include_directories(order_gateway_proto PUBLIC ${PROTO_DIR})
 target_link_libraries(order_gateway_proto PUBLIC protobuf::libprotobuf gRPC::grpc++)
 set_property(TARGET order_gateway_proto PROPERTY CXX_STANDARD 20)
 
@@ -110,10 +111,14 @@ set_property(TARGET flashmatch PROPERTY CXX_STANDARD 20)
 # gRPC server and client examples
 add_executable(order_gateway_server src/order_gateway_server.cpp)
 target_link_libraries(order_gateway_server PRIVATE order_gateway_proto lock_free_queue gRPC::grpc++)
+# Make sure server can find proto headers
+target_include_directories(order_gateway_server PRIVATE ${PROTO_DIR})
 set_property(TARGET order_gateway_server PROPERTY CXX_STANDARD 20)
 
 add_executable(order_gateway_client src/order_gateway_client.cpp)
 target_link_libraries(order_gateway_client PRIVATE order_gateway_proto gRPC::grpc++)
+# Make sure client can find proto headers
+target_include_directories(order_gateway_client PRIVATE ${PROTO_DIR})
 set_property(TARGET order_gateway_client PROPERTY CXX_STANDARD 20)
 
 # ---- Tests --------------------------------------------------------------------
