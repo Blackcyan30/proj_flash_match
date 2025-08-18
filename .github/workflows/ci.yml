@@ -79,10 +79,11 @@ jobs:
       # 'tail -f /dev/null' keeps the container alive for subsequent exec steps.
 
       # For debug right after startup.
-      - name: Check container status
+      - name: Verify container is up
         run: |
           docker ps -a
-          docker inspect -f 'status={{.State.Status}} exit ={{.State.ExitCode}}'
+          docker inspect -f '{{.State.Status}} {{.Config.Image}} {{.Name}}' flashmatch-ci
+          docker exec flashmatch-ci uname -m
 
       - name: Show container logs if it exits
         if: failure()
@@ -106,9 +107,28 @@ jobs:
       # Runs the dataset generator script directly without input (now uses hardcoded values)
       # Skips work if the CSV already exists in the repo path.
 
+      - name: Lists tests (ctest -N)
+        run: docker exec flashmatch-ci bash -lc 'cd build && ctest -N' || true
       - name: Run tests
         run: docker exec flashmatch-ci bash -lc 'cd build && ctest --output-on-failure -V'
       # Runs your CTest suite in verbose mode; prints failing test logs.
+
+
+      - name: Run test binaries explicitly
+        run: |
+            docker exec flashmatch-ci bash -lc '
+            set -e
+            cd build
+            # Adjust path if your tests end up elsewhere:
+            if [ -d tests ]; then
+                find tests -type f -perm -111 -maxdepth 1 | while read -r t; do
+                echo ">>> Running $t"
+                "$t"
+                done
+            else
+                echo "No build/tests dir found; skipping explicit runs."
+            fi
+            '
 
       - name: Cleanup
         if: always()
