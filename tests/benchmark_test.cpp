@@ -27,7 +27,8 @@ protected:
           (std::filesystem::path(__FILE__).parent_path() / ".." / "datasets")
               .string() +
           " && python3 generate_orderbook.py)";
-      std::system(cmd.c_str());
+      int result = std::system(cmd.c_str());
+      ASSERT_EQ(result, 0) << "Dataset generation failed with code " << result;
     }
     ASSERT_TRUE(std::filesystem::exists(path))
         << "Dataset missing after generation";
