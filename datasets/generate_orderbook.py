@@ -6,8 +6,9 @@ import sys
 
 import numpy as np
 import pandas as pd
-import psutil
 from tqdm import tqdm
+
+import psutil  # type: ignore
 
 
 def available_ram_gb():
