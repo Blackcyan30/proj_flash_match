@@ -85,8 +85,26 @@ jobs:
           docker inspect -f '{{.State.Status}} {{.Config.Image}} {{.Name}}' flashmatch-ci
           docker exec flashmatch-ci uname -m
 
-      - name: Install dataset dependencies
-        run: docker exec flashmatch-ci bash -lc 'apt install psutil'
+     # ---------- FIX: install psutil the Debian way ----------
+      - name: Install psutil via apt (PEP 668-safe)
+        run: |
+          docker exec flashmatch-ci bash -lc '
+            set -e
+            apt-get update
+            apt-get install -y python3-psutil python3-venv
+            python3 -c "import psutil; print(\"psutil=\", psutil.__version__)"
+          '
+
+      # ---------- Use a venv for pip-installed deps ----------
+      - name: Create venv & install Python dependencies
+        run: |
+          docker exec flashmatch-ci bash -lc '
+            set -e
+            python3 -m venv .venv
+            . .venv/bin/activate
+            python -m pip install --upgrade pip
+            pip install -r datasets/requirements.txt
+          '
 
       - name: Show container logs if it exits
         if: failure()
