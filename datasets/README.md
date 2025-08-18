@@ -25,10 +25,11 @@ Fast, memory-safe, and CLI-friendly — supports CSV, JSON, batching, compressio
 ### 1. Install dependencies:
 
 ```bash
-pip install pandas numpy psutil tqdm
+pip install pandas numpy tqdm psutil
 ```
 
-> For compressed output, Python’s built-in `gzip` is used (no extra setup needed).
+`psutil` enables automatic detection of available RAM.
+For compressed output, Python’s built-in `gzip` is used (no extra setup needed).
 
 ---
 

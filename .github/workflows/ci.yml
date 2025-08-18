@@ -85,6 +85,9 @@ jobs:
           docker inspect -f '{{.State.Status}} {{.Config.Image}} {{.Name}}' flashmatch-ci
           docker exec flashmatch-ci uname -m
 
+      - name: Install dataset dependencies
+        run: docker exec flashmatch-ci pip install -r datasets/requirements.txt
+
       - name: Show container logs if it exits
         if: failure()
         run: docker logs flashmatch-ci || true
