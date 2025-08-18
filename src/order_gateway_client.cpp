@@ -1,8 +1,8 @@
+#include <grpcpp/grpcpp.h>
+
 #include <iostream>
 #include <memory>
 #include <string>
-
-#include <grpcpp/grpcpp.h>
 
 #include "order_gateway.grpc.pb.h"
 
