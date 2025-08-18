@@ -86,7 +86,7 @@ jobs:
           docker exec flashmatch-ci uname -m
 
       - name: Install dataset dependencies
-        run: docker exec flashmatch-ci pip install -r datasets/requirements.txt
+        run: docker exec flashmatch-ci bash -lc 'apt install psutil'
 
       - name: Show container logs if it exits
         if: failure()
