@@ -38,6 +38,8 @@ RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
       python3-numpy \
       python3-matplotlib \
       python3-pandas \
+      python3-tqdm \
+      python3-psutil \
     && rm -rf /var/lib/apt/lists/*
 
 # Natural python/pip names
