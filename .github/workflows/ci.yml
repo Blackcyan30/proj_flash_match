@@ -42,8 +42,8 @@ jobs:
       # Logs the Docker client into GHCR using the workflow's token.
       # This works for both public and private images under the same owner/org.
 
-      - name: Pull prebuilt image (flashmatch:2)
-        run: docker pull ghcr.io/${{ env.OWNER_LC }}/flashmatch:2
+      - name: Pull prebuilt image (flashmatch:3)
+        run: docker pull ghcr.io/${{ env.OWNER_LC }}/flashmatch:3
       # Pull the exact prebuilt tag you pushed: ghcr.io/<owner>/flashmatch:2
 
       #######################################################################
@@ -70,7 +70,7 @@ jobs:
           docker run -d --name flashmatch-ci \
             -v "$GITHUB_WORKSPACE":/flashmatch -w /flashmatch \
             --entrypoint /bin/bash \
-            ghcr.io/${{ env.OWNER_LC }}/flashmatch:2 -lc "sleep infinity"
+            ghcr.io/${{ env.OWNER_LC }}/flashmatch:3 -lc "sleep infinity"
       # ghcr.io/${{ env.OWNER_LC }}/flashmatch:2 tail -f /dev/null
       # Starts a background container named "flashmatch-ci" from your image.
       # -v "$GITHUB_WORKSPACE":/flashmatch -> bind-mounts your repo into /flashmatch in the container,
