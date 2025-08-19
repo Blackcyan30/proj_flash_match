@@ -9,9 +9,10 @@ ARG ARCH=x86_64
 ARG GRPC_VERSION=v1.74.0
 
 ENV DEBIAN_FRONTEND=noninteractive \
-    TZ=UTC
+    TZ=UTC \
+    PIP_BREAK_SYSTEM_PACKAGES=1
 
-# -------- System deps (+ Python stack) with fast APT + fewer recommends --------
+# -------- System deps with fast APT + fewer recommends --------
 # Cache APT indices across builds; install only what we actually need.
 # We combine into one layer to keep images smaller and caching effective.
 RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
@@ -35,16 +36,15 @@ RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
       ccache \
       python3 \
       python3-pip \
-      python3-numpy \
-      python3-matplotlib \
-      python3-pandas \
-      python3-tqdm \
-      python3-psutil \
     && rm -rf /var/lib/apt/lists/*
 
 # Natural python/pip names
 RUN ln -sf /usr/bin/python3 /usr/bin/python && \
     ln -sf /usr/bin/pip3 /usr/bin/pip
+
+# -------- Python dependencies for dataset generation --------
+COPY datasets/requirements.txt /tmp/requirements.txt
+RUN pip install --no-cache-dir -r /tmp/requirements.txt && rm /tmp/requirements.txt
 
 # -------- Build gRPC (C++), from source at the pinned version --------
 # Use ccache to speed up repeat builds; keep ccache across builds via BuildKit cache mount.

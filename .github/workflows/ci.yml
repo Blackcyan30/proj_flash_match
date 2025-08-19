@@ -85,19 +85,6 @@ jobs:
           docker inspect -f '{{.State.Status}} {{.Config.Image}} {{.Name}}' flashmatch-ci
           docker exec flashmatch-ci uname -m
 
-      # ---------------------------------------------------------------
-      # TEMP: install Python deps needed for dataset generation. These
-      # should be baked into the Docker image in future revisions.
-      # ---------------------------------------------------------------
-      - name: Install Python dependencies
-        run: |
-          docker exec flashmatch-ci bash -lc '
-            set -e
-            apt-get update
-            apt-get install -y python3-pip
-            pip3 install --no-cache-dir -r datasets/requirements.txt
-          '
-
       - name: Show container logs if it exits
         if: failure()
         run: docker logs flashmatch-ci || true
