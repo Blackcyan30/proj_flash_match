@@ -85,17 +85,22 @@ jobs:
           docker inspect -f '{{.State.Status}} {{.Config.Image}} {{.Name}}' flashmatch-ci
           docker exec flashmatch-ci uname -m
 
-      - name: Debug container status
-        if: failure() || always()
+      # ---------------------------------------------------------------
+      # TEMP: install Python deps needed for dataset generation. These
+      # should be baked into the Docker image in future revisions.
+      # ---------------------------------------------------------------
+      - name: Install Python dependencies
         run: |
-            set -euxo pipefail
-            docker ps -a
-            # Show container state & config
-            docker inspect flashmatch-ci --format 'NAME={{.Name}} STATUS={{.State.Status}} IMAGEID={{.Image}} CMD={{.Config.Cmd}}'
-            # Show image OS/ARCH for the container's image
-            IMG_ID=$(docker inspect flashmatch-ci --format '{{.Image}}')
-            docker inspect "$IMG_ID" --format 'IMAGE_OS={{.Os}} IMAGE_ARCH={{.Architecture}}' || true
-            docker logs flashmatch-ci || true
+          docker exec flashmatch-ci bash -lc '
+            set -e
+            apt-get update
+            apt-get install -y python3-pip
+            pip3 install --no-cache-dir -r datasets/requirements.txt
+          '
+
+      - name: Show container logs if it exits
+        if: failure()
+        run: docker logs flashmatch-ci || true
 
       - name: Configure CMake
         run: docker exec flashmatch-ci bash -lc 'mkdir -p build && cd build && cmake -S ..'
