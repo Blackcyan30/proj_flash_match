@@ -38,8 +38,6 @@ RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
       python3-numpy \
       python3-matplotlib \
       python3-pandas \
-      python3-tqdm \
-      python3-psutil \
     && rm -rf /var/lib/apt/lists/*
 
 # Natural python/pip names
@@ -79,6 +77,9 @@ RUN echo "---- Build Environment Details ----" && \
     echo "C++ Standard: C++20" && \
     echo "Compiler: $(c++ --version | head -n 1)" && \
     echo "--------------------------------"
+
+# -------- Install additional Python packages for datasets --------
+RUN pip install --no-cache-dir --break-system-packages tqdm>=4.64.0 psutil>=5.9.0
 
 # -------- Project working dir; code is bind-mounted in CI/dev --------
 WORKDIR /flashmatch

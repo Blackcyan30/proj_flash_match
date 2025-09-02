@@ -70,7 +70,7 @@ jobs:
           docker run -d --name flashmatch-ci \
             -v "$GITHUB_WORKSPACE":/flashmatch -w /flashmatch \
             --entrypoint /bin/bash \
-            ghcr.io/${{ env.OWNER_LC }}/flashmatch:3 -lc "sleep infinity"
+            ghcr.io/${{ env.OWNER_LC }}/flashmatch:5 -lc "sleep infinity"
       # ghcr.io/${{ env.OWNER_LC }}/flashmatch:2 tail -f /dev/null
       # Starts a background container named "flashmatch-ci" from your image.
       # -v "$GITHUB_WORKSPACE":/flashmatch -> bind-mounts your repo into /flashmatch in the container,
